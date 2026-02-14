@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: revenue-bot
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app/main.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.8
+      - key: APP_HOST
+        value: 0.0.0.0
+      - key: APP_PORT
+        value: 10000
+      - key: DATABASE_PATH
+        value: /tmp/revenue_bot.db
+      - key: ADMIN_TOKEN
+        generateValue: true
+      - key: AUTO_GENERATE_INTERVAL_MINUTES
+        value: 60
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: PAYPAL_ENV
+        value: sandbox
+      - key: PAYOUT_SENDER_EMAIL
+        sync: false

@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Revenue Bot Dashboard</title>
+  <style>
+    :root {
+      --bg: #f7f8fb;
+      --panel: #ffffff;
+      --line: #d9deeb;
+      --text: #1e2430;
+      --muted: #5d6a85;
+      --accent: #1363df;
+    }
+    body {
+      margin: 0;
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at top right, #e7f0ff, var(--bg));
+    }
+    main {
+      max-width: 1000px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    h1 { margin: 0 0 0.5rem 0; }
+    p { margin: 0 0 1rem 0; color: var(--muted); }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 1rem;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+    th, td {
+      padding: 0.6rem;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+    }
+    th { color: var(--muted); font-weight: 600; }
+    .pill {
+      display: inline-block;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      background: #eaf1ff;
+      color: var(--accent);
+    }
+    @media (max-width: 640px) {
+      th, td { font-size: 0.85rem; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Revenue Bot Dashboard</h1>
+    <p>This MVP automatically generates digital product offers and queues payouts from confirmed sales.</p>
+    <div class="grid">
+      <section class="card">
+        <h2>Active Products <span class="pill">{{ products|length }}</span></h2>
+        <table>
+          <thead>
+            <tr><th>Title</th><th>Price</th><th>Checkout URL</th><th>Created</th></tr>
+          </thead>
+          <tbody>
+            {% for p in products %}
+            <tr>
+              <td>{{ p.title }}</td>
+              <td>${{ "%.2f"|format(p.price_cents / 100) }}</td>
+              <td><a href="{{ p.checkout_url }}" target="_blank" rel="noopener">Link</a></td>
+              <td>{{ p.created_at }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+
+      <section class="card">
+        <h2>Recent Payouts <span class="pill">{{ payouts|length }}</span></h2>
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Recipient</th><th>Amount</th><th>Status</th><th>Note</th><th>Updated</th></tr>
+          </thead>
+          <tbody>
+            {% for p in payouts %}
+            <tr>
+              <td>{{ p.id[:8] }}</td>
+              <td>{{ p.venmo_recipient }}</td>
+              <td>${{ "%.2f"|format(p.amount_cents / 100) }}</td>
+              <td>{{ p.status }}</td>
+              <td>{{ p.note }}</td>
+              <td>{{ p.updated_at }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
