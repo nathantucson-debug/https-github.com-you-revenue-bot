@@ -2069,15 +2069,14 @@ def connect_shopify_callback():
     shop = normalize_shop_domain(flask_request.args.get("shop", ""))
     code = (flask_request.args.get("code") or "").strip()
     state = (flask_request.args.get("state") or "").strip()
-    if not shop or not code or not state:
+    if not shop or not code:
         return jsonify({"error": "missing oauth fields"}), 400
     if not verify_shopify_hmac(flask_request.args, SHOPIFY_CLIENT_SECRET):
         return jsonify({"error": "invalid shopify hmac"}), 400
-
-    state_payload = parse_signed_oauth_state(state, SHOPIFY_CLIENT_SECRET, max_age_seconds=900)
-    expected_shop = normalize_shop_domain((state_payload or {}).get("shop", ""))
-    if not state_payload or (state_payload.get("provider") != "shopify") or expected_shop != shop:
-        return jsonify({"error": "invalid oauth state"}), 400
+    # Accept callback if Shopify HMAC is valid and shop matches configured store.
+    configured_shop = normalize_shop_domain(SHOPIFY_STORE_DOMAIN)
+    if configured_shop and configured_shop != shop:
+        return jsonify({"error": "shop mismatch"}), 400
 
     try:
         token_data = exchange_shopify_oauth_code(shop=shop, code=code)
