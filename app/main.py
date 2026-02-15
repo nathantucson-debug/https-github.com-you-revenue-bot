@@ -44,6 +44,10 @@ GUMROAD_API_BASE = os.getenv("GUMROAD_API_BASE", "https://api.gumroad.com/v2")
 SHOPIFY_STORE_DOMAIN = os.getenv("SHOPIFY_STORE_DOMAIN", "")
 SHOPIFY_ACCESS_TOKEN = os.getenv("SHOPIFY_ACCESS_TOKEN", "")
 SHOPIFY_API_VERSION = os.getenv("SHOPIFY_API_VERSION", "2024-10")
+SHOPIFY_CLIENT_ID = os.getenv("SHOPIFY_CLIENT_ID", "")
+SHOPIFY_CLIENT_SECRET = os.getenv("SHOPIFY_CLIENT_SECRET", "")
+SHOPIFY_REDIRECT_URI = os.getenv("SHOPIFY_REDIRECT_URI", "")
+SHOPIFY_SCOPES = os.getenv("SHOPIFY_SCOPES", "read_products,write_products")
 
 PAYPAL_BASE = "https://api-m.paypal.com" if PAYPAL_ENV == "live" else "https://api-m.sandbox.paypal.com"
 
@@ -944,8 +948,24 @@ def gumroad_enabled() -> bool:
     return bool(GUMROAD_ACCESS_TOKEN)
 
 
+def normalize_shop_domain(value: str) -> str:
+    raw = (value or "").strip().lower().replace("https://", "").replace("http://", "").strip("/")
+    if raw and not raw.endswith(".myshopify.com"):
+        raw = f"{raw}.myshopify.com"
+    return raw
+
+
+def shopify_oauth_enabled() -> bool:
+    return bool(SHOPIFY_CLIENT_ID and SHOPIFY_CLIENT_SECRET and SHOPIFY_REDIRECT_URI)
+
+
+def shopify_connection() -> dict | None:
+    return get_channel_connection("shopify")
+
+
 def shopify_enabled() -> bool:
-    return bool(SHOPIFY_STORE_DOMAIN and SHOPIFY_ACCESS_TOKEN)
+    static_ok = bool(normalize_shop_domain(SHOPIFY_STORE_DOMAIN) and SHOPIFY_ACCESS_TOKEN.strip())
+    return static_ok or bool(shopify_connection())
 
 
 def etsy_headers(access_token: str) -> dict[str, str]:
@@ -1268,11 +1288,63 @@ def publish_product_to_gumroad(product: dict) -> dict:
     return {"product_id": external_id, "product_url": external_url, "status": "draft"}
 
 
+def verify_shopify_hmac(args_dict, shared_secret: str) -> bool:
+    given = (args_dict.get("hmac") or "").strip()
+    if not given:
+        return False
+    pairs = []
+    for key in sorted(args_dict.keys()):
+        if key in {"hmac", "signature"}:
+            continue
+        values = args_dict.getlist(key)
+        if not values:
+            pairs.append(f"{key}=")
+            continue
+        for value in sorted(values):
+            pairs.append(f"{key}={value}")
+    message = "&".join(pairs)
+    digest = hmac.new(shared_secret.encode("utf-8"), message.encode("utf-8"), hashlib.sha256).hexdigest()
+    return hmac.compare_digest(digest, given)
+
+
+def exchange_shopify_oauth_code(shop: str, code: str) -> dict:
+    endpoint = f"https://{shop}/admin/oauth/access_token"
+    payload = {
+        "client_id": SHOPIFY_CLIENT_ID,
+        "client_secret": SHOPIFY_CLIENT_SECRET,
+        "code": code,
+    }
+    req = request.Request(
+        endpoint,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    with request.urlopen(req, timeout=20) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
+def resolve_shopify_credentials() -> tuple[str, str]:
+    static_domain = normalize_shop_domain(SHOPIFY_STORE_DOMAIN)
+    static_token = SHOPIFY_ACCESS_TOKEN.strip()
+    if static_domain and static_token:
+        return static_domain, static_token
+
+    conn_data = shopify_connection()
+    if conn_data:
+        domain = normalize_shop_domain(conn_data.get("account_id", ""))
+        token = (conn_data.get("access_token") or "").strip()
+        if domain and token:
+            return domain, token
+
+    raise ValueError("shopify not connected")
+
+
 def publish_product_to_shopify(product: dict) -> dict:
     if not shopify_enabled():
         raise ValueError("shopify not configured")
 
-    domain = SHOPIFY_STORE_DOMAIN.strip().replace("https://", "").replace("http://", "")
+    domain, access_token = resolve_shopify_credentials()
     endpoint = f"https://{domain}/admin/api/{SHOPIFY_API_VERSION}/products.json"
     payload = {
         "product": {
@@ -1292,7 +1364,7 @@ def publish_product_to_shopify(product: dict) -> dict:
         endpoint,
         data=json.dumps(payload).encode("utf-8"),
         headers={
-            "X-Shopify-Access-Token": SHOPIFY_ACCESS_TOKEN,
+            "X-Shopify-Access-Token": access_token,
             "Content-Type": "application/json",
         },
         method="POST",
@@ -1689,6 +1761,7 @@ def dashboard():
     leads = list_recent_abandoned_leads(limit=20)
     deliveries = list_recent_deliveries(limit=20)
     etsy_conn = get_channel_connection("etsy")
+    shopify_conn = shopify_connection()
     etsy_listings = list_channel_listings("etsy", limit=50)
     gumroad_listings = list_channel_listings("gumroad", limit=50)
     shopify_listings = list_channel_listings("shopify", limit=50)
@@ -1708,6 +1781,9 @@ def dashboard():
         etsy_enabled=etsy_enabled(),
         gumroad_enabled=gumroad_enabled(),
         shopify_enabled=shopify_enabled(),
+        shopify_oauth_enabled=shopify_oauth_enabled(),
+        shopify_connected=bool(shopify_conn) or bool(normalize_shop_domain(SHOPIFY_STORE_DOMAIN) and SHOPIFY_ACCESS_TOKEN.strip()),
+        shopify_store=(shopify_conn or {}).get("account_id", normalize_shop_domain(SHOPIFY_STORE_DOMAIN)),
     )
 
 
@@ -1923,6 +1999,75 @@ def admin_publish_etsy_all():
     if flask_request.form.get("redirect") == "1":
         return redirect("/admin?etsy=bulk", code=302)
     return jsonify({"ok": True, "success": success_count, "failed": fail_count, "results": results})
+
+
+@app.get("/connect/shopify")
+def connect_shopify():
+    if not admin_guard_any():
+        return jsonify({"error": "unauthorized"}), 401
+    if not shopify_oauth_enabled():
+        return (
+            jsonify(
+                {
+                    "error": "shopify oauth not configured",
+                    "needed": ["SHOPIFY_CLIENT_ID", "SHOPIFY_CLIENT_SECRET", "SHOPIFY_REDIRECT_URI"],
+                }
+            ),
+            503,
+        )
+
+    shop = normalize_shop_domain(flask_request.args.get("shop") or SHOPIFY_STORE_DOMAIN)
+    if not shop:
+        return jsonify({"error": "missing shop parameter", "example": "/connect/shopify?shop=your-store.myshopify.com"}), 400
+
+    state = str(uuid.uuid4())
+    save_oauth_state("shopify", state, shop)
+    params = {
+        "client_id": SHOPIFY_CLIENT_ID,
+        "scope": SHOPIFY_SCOPES,
+        "redirect_uri": SHOPIFY_REDIRECT_URI,
+        "state": state,
+    }
+    return redirect(f"https://{shop}/admin/oauth/authorize?{parse.urlencode(params)}", code=302)
+
+
+@app.get("/connect/shopify/callback")
+def connect_shopify_callback():
+    if not shopify_oauth_enabled():
+        return jsonify({"error": "shopify oauth not configured"}), 503
+
+    shop = normalize_shop_domain(flask_request.args.get("shop", ""))
+    code = (flask_request.args.get("code") or "").strip()
+    state = (flask_request.args.get("state") or "").strip()
+    if not shop or not code or not state:
+        return jsonify({"error": "missing oauth fields"}), 400
+    if not verify_shopify_hmac(flask_request.args, SHOPIFY_CLIENT_SECRET):
+        return jsonify({"error": "invalid shopify hmac"}), 400
+
+    expected_shop = consume_oauth_state("shopify", state)
+    if not expected_shop or normalize_shop_domain(expected_shop) != shop:
+        return jsonify({"error": "invalid oauth state"}), 400
+
+    try:
+        token_data = exchange_shopify_oauth_code(shop=shop, code=code)
+        access_token = (token_data.get("access_token") or "").strip()
+        if not access_token:
+            return jsonify({"error": "shopify token exchange failed", "detail": token_data}), 502
+        save_channel_connection(
+            provider="shopify",
+            access_token=access_token,
+            refresh_token="",
+            expires_at="2099-01-01T00:00:00+00:00",
+            account_id=shop,
+            account_name=shop,
+        )
+    except HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="ignore")
+        return jsonify({"error": "shopify api error", "detail": detail}), 502
+    except URLError as exc:
+        return jsonify({"error": "shopify network error", "detail": str(exc)}), 502
+
+    return redirect("/admin?shopify=connected", code=302)
 
 
 @app.post("/admin/publish/gumroad/<product_id>")

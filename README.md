@@ -50,7 +50,7 @@ Open: `http://localhost:8080`
 5. (Optional) set SMTP vars for automated delivery emails: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`.
 6. (Optional) set Etsy vars for marketplace publishing: `ETSY_CLIENT_ID`, `ETSY_CLIENT_SECRET`, `ETSY_REDIRECT_URI`, `ETSY_SCOPES`.
 7. (Optional) set Gumroad vars: `GUMROAD_ACCESS_TOKEN`.
-8. (Optional) set Shopify vars: `SHOPIFY_STORE_DOMAIN`, `SHOPIFY_ACCESS_TOKEN`, `SHOPIFY_API_VERSION`.
+8. (Optional) set Shopify vars: `SHOPIFY_STORE_DOMAIN`, `SHOPIFY_ACCESS_TOKEN`, `SHOPIFY_API_VERSION`, `SHOPIFY_CLIENT_ID`, `SHOPIFY_CLIENT_SECRET`, `SHOPIFY_REDIRECT_URI`, `SHOPIFY_SCOPES`.
 9. Open your Render service URL once deployment finishes.
 
 Notes:
@@ -78,6 +78,8 @@ Notes:
 - `POST /admin/publish/gumroad-all` (header `x-admin-token` or form/query `admin_token`)
 - `POST /admin/publish/shopify/<product_id>` (header `x-admin-token` or form/query `admin_token`)
 - `POST /admin/publish/shopify-all` (header `x-admin-token` or form/query `admin_token`)
+- `GET /connect/shopify` (requires admin token; starts Shopify OAuth)
+- `GET /connect/shopify/callback` (Shopify OAuth callback)
 - `POST /admin/generate` (header: `x-admin-token`)
 - `POST /admin/generate-batch?count=10` (header: `x-admin-token`)
 - `POST /admin/run-payouts` (header: `x-admin-token`)
@@ -149,6 +151,19 @@ Notes:
 
 ## Shopify integration setup
 
+Option A: OAuth connect (recommended if you already have Dev Dashboard app credentials):
+1. In Render set:
+   - `SHOPIFY_CLIENT_ID`
+   - `SHOPIFY_CLIENT_SECRET`
+   - `SHOPIFY_REDIRECT_URI` (example: `https://revenue-bot-ktqu.onrender.com/connect/shopify/callback`)
+   - `SHOPIFY_SCOPES` (default `read_products,write_products`)
+   - `SHOPIFY_STORE_DOMAIN` (example: `your-store.myshopify.com`)
+2. Redeploy.
+3. Open:
+   - `https://<your-render-domain>/admin?admin_token=<ADMIN_TOKEN>`
+4. In Shopify section, click **Connect Shopify** and approve.
+
+Option B: Manual token:
 1. In Shopify Admin, create a custom app and grant product write permissions.
 2. Install the app and copy the Admin API access token.
 3. In Render set:

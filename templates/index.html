@@ -135,9 +135,28 @@
       <section class="card">
         <h2>Shopify Integration</h2>
         {% if not shopify_enabled %}
-        <p>Set <code>SHOPIFY_STORE_DOMAIN</code> and <code>SHOPIFY_ACCESS_TOKEN</code> in Render env vars to enable Shopify publishing.</p>
-        {% else %}
+        <p>Not connected yet.</p>
+        {% if shopify_oauth_enabled %}
         <div class="actions">
+          <a class="btn primary" href="/connect/shopify?admin_token={{ admin_token_hint|urlencode }}{% if shopify_store %}&shop={{ shopify_store|urlencode }}{% endif %}">Connect Shopify</a>
+        </div>
+        <p class="status-line">Uses Shopify OAuth with your app Client ID/Secret.</p>
+        {% else %}
+        <p>Set OAuth vars <code>SHOPIFY_CLIENT_ID</code>, <code>SHOPIFY_CLIENT_SECRET</code>, <code>SHOPIFY_REDIRECT_URI</code> (or set manual token vars <code>SHOPIFY_STORE_DOMAIN</code> + <code>SHOPIFY_ACCESS_TOKEN</code>).</p>
+        {% endif %}
+        {% else %}
+        <p>
+          Connection:
+          {% if shopify_connected %}
+          <span class="pill">Connected{% if shopify_store %}: {{ shopify_store }}{% endif %}</span>
+          {% else %}
+          <span class="pill">Configured</span>
+          {% endif %}
+        </p>
+        <div class="actions">
+          {% if shopify_oauth_enabled %}
+          <a class="btn" href="/connect/shopify?admin_token={{ admin_token_hint|urlencode }}{% if shopify_store %}&shop={{ shopify_store|urlencode }}{% endif %}">Reconnect Shopify</a>
+          {% endif %}
           <form action="/admin/publish/shopify-all" method="POST">
             <input type="hidden" name="admin_token" value="{{ admin_token_hint }}">
             <input type="hidden" name="redirect" value="1">
