@@ -5,102 +5,48 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Northstar Studio Catalog</title>
   <style>
-    :root {
-      --ink: #0f172a;
-      --muted: #4b5563;
-      --line: #dbe3f0;
-      --surface: #ffffff;
-      --bg: #f4f7fc;
-      --brand: #0b5bd3;
-    }
+    :root { --ink:#111827; --muted:#4b5563; --line:#dbe3f0; --bg:#f4f7fc; --brand:#0b5bd3; --soft:#eef4ff; }
     * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: "Söhne", "Avenir Next", "Segoe UI", sans-serif;
-      color: var(--ink);
-      background: linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
-    }
-    .wrap { max-width: 1120px; margin: 0 auto; padding: 0 1rem; }
-    header {
-      border-bottom: 1px solid var(--line);
-      background: rgba(255,255,255,.9);
-      position: sticky;
-      top: 0;
-      backdrop-filter: blur(8px);
-      z-index: 10;
-    }
-    .nav { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; }
-    .brand { font-weight: 800; }
-    .brand small { color: var(--muted); margin-left: .35rem; font-weight: 600; }
-    .btn {
-      display: inline-block;
-      text-decoration: none;
-      border-radius: 10px;
-      padding: .58rem .9rem;
-      font-weight: 700;
-      border: 1px solid var(--line);
-      color: var(--ink);
-      background: #fff;
-    }
-    .btn.primary { background: var(--brand); color: #fff; border-color: var(--brand); }
+    body { margin:0; font-family:"Avenir Next","Segoe UI",sans-serif; color:var(--ink); background:linear-gradient(180deg,#f8fbff 0%,var(--bg) 100%); }
+    .wrap { max-width:1140px; margin:0 auto; padding:0 1rem; }
+    header { position:sticky; top:0; z-index:20; backdrop-filter:blur(8px); background:rgba(248,251,255,.9); border-bottom:1px solid rgba(219,227,240,.8); }
+    .nav { display:flex; justify-content:space-between; align-items:center; padding:1rem 0; }
+    .brand { font-weight:800; }
+    .btn { display:inline-block; text-decoration:none; border-radius:10px; padding:.58rem .9rem; font-weight:700; border:1px solid var(--line); color:var(--ink); background:#fff; }
+    .btn.primary { background:var(--brand); color:#fff; border-color:var(--brand); }
 
-    main { padding: 1.5rem 0 2rem; }
-    h1 { margin: 0 0 .35rem; font-size: 2rem; }
-    .sub { margin: 0 0 .9rem; color: var(--muted); }
+    main { padding:1.4rem 0 2rem; }
+    h1 { margin:0 0 .35rem; font-size:2rem; }
+    .sub { margin:0 0 .85rem; color:var(--muted); }
+    .chips { display:flex; gap:.4rem; flex-wrap:wrap; margin-bottom:.95rem; }
+    .chip { font-size:.78rem; border:1px solid #d1dbef; border-radius:999px; padding:.2rem .55rem; color:#28406e; background:#f2f6ff; font-weight:700; }
 
-    .chips { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: 1rem; }
-    .chip {
-      font-size: .78rem;
-      border: 1px solid #d1dbef;
-      border-radius: 999px;
-      padding: .2rem .55rem;
-      color: #28406e;
-      background: #f2f6ff;
-      font-weight: 700;
-    }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(255px,1fr)); gap:.9rem; }
+    .card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:1rem; display:flex; flex-direction:column; gap:.45rem; min-height:305px; }
+    .thumb { height:110px; border-radius:10px; border:1px solid rgba(255,255,255,.45); width:100%; object-fit:cover; background:#e6edf8; }
+    .cat { align-self:flex-start; font-size:.73rem; font-weight:700; background:var(--soft); color:#194ead; border:1px solid #d1deff; border-radius:999px; padding:.2rem .5rem; }
+    .title { margin:.2rem 0 .1rem; font-size:1.05rem; }
+    .tagline { margin:0; color:#1f355c; font-weight:700; }
+    .desc { margin:0; color:var(--muted); line-height:1.45; }
+    .price { font-size:1.22rem; font-weight:800; margin-top:auto; }
+    .row { display:flex; gap:.45rem; flex-wrap:wrap; }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));
-      gap: .9rem;
-    }
-    .card {
-      background: #fff;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: .45rem;
-      min-height: 275px;
-    }
-    .cat {
-      align-self: flex-start;
-      font-size: .73rem;
-      font-weight: 700;
-      background: #eef3ff;
-      color: #194ead;
-      border: 1px solid #d1deff;
-      border-radius: 999px;
-      padding: .2rem .5rem;
-    }
-    .title { margin: .2rem 0 .1rem; font-size: 1.05rem; }
-    .tagline { margin: 0; color: #1f355c; font-weight: 700; }
-    .desc { margin: 0; color: var(--muted); line-height: 1.45; }
-    .price { font-size: 1.22rem; font-weight: 800; margin-top: auto; }
-    .row { display: flex; gap: .45rem; flex-wrap: wrap; }
+    .bundles { margin-top:1.2rem; display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:.85rem; }
+    .bundle { background:#fff; border:1px solid var(--line); border-radius:14px; padding:1rem; }
+    .bundle h3 { margin:0 0 .3rem; }
   </style>
 </head>
 <body>
   <header>
     <div class="wrap nav">
-      <div class="brand">Northstar Studio <small>Catalog</small></div>
+      <div class="brand">Northstar Studio Catalog</div>
       <a class="btn" href="/">Home</a>
     </div>
   </header>
+
   <main class="wrap">
     <h1>Digital Product Collection</h1>
-    <p class="sub">Curated, practical assets for business, content, career, and operations workflows.</p>
+    <p class="sub">Curated for creator growth, operations, ecommerce, career advancement, and productivity.</p>
 
     <div class="chips">
       {% for c in categories %}
@@ -111,6 +57,7 @@
     <div class="grid">
       {% for p in products %}
       <article class="card">
+        <img class="thumb" src="{{ p.cover_image }}" alt="{{ p.title }} cover">
         <span class="cat">{{ p.category }}</span>
         <h2 class="title">{{ p.title }}</h2>
         <p class="tagline">{{ p.tagline }}</p>
@@ -123,6 +70,17 @@
       </article>
       {% endfor %}
     </div>
+
+    <section class="bundles">
+      {% for b in bundles %}
+      <article class="bundle">
+        <h3>{{ b["title"] }}</h3>
+        <p>{{ b["description"] }}</p>
+        <p><strong>${{ "%.2f"|format(b["price_cents"] / 100) }}</strong> bundle price</p>
+        <a class="btn primary" href="/bundle/{{ b['key'] }}">View Bundle</a>
+      </article>
+      {% endfor %}
+    </section>
   </main>
 </body>
 </html>

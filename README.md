@@ -1,14 +1,15 @@
-# Revenue Bot MVP
+# Northstar Studio Storefront
 
 This is a legal automation starter app for online revenue operations.
 
-It does **not** guarantee instant money. No legal app can reliably guarantee immediate profit. What this app does is automate the pipeline:
+This app provides a production-style digital storefront pipeline:
 
-- auto-generate digital product listings
-- create real Stripe Checkout sessions for product purchases
-- accept webhook-confirmed sales (Stripe event endpoint)
-- queue and process payouts to Venmo (via PayPal Payouts API when configured)
-- provide a dashboard for products and payout status
+- curated product catalog with brand-focused storefront pages
+- product and bundle checkout with optional order bump
+- lead capture for abandoned-cart follow-up
+- Stripe checkout + webhook sale confirmation
+- post-purchase delivery emails (SMTP or simulated mode)
+- payout queue processing to Venmo via PayPal Payouts
 
 ## Stack
 
@@ -19,8 +20,9 @@ It does **not** guarantee instant money. No legal app can reliably guarantee imm
 ## Brand + Product Strategy
 
 - Public home page: `/`
-- Public catalog: `/store`
-- Product detail pages: `/products/<product_id>`
+- Catalog: `/store`
+- Product page: `/products/<product_id>`
+- Bundle page: `/bundle/<bundle_key>`
 - Market analysis notes: `MARKET_ANALYSIS.md`
 
 ## Quick start
@@ -42,6 +44,7 @@ Open: `http://localhost:8080`
 2. In Render, click **New +** -> **Blueprint**.
 3. Select your GitHub repo; Render will detect `render.yaml` and deploy.
 4. Set required secrets in Render: `APP_PUBLIC_URL`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYOUT_SENDER_EMAIL`.
+5. (Optional) set SMTP vars for automated delivery emails: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`.
 5. Open your Render service URL once deployment finishes.
 
 Notes:
@@ -50,17 +53,22 @@ Notes:
 
 ## Key endpoints
 
-- `GET /` dashboard
 - `GET /` landing page
 - `GET /store` storefront
 - `GET /health`
 - `GET /api/products`
 - `GET /products/<product_id>`
+- `GET /bundle/<bundle_key>`
 - `GET /checkout/<product_id>`
+- `GET /checkout/bundle/<bundle_key>`
+- `POST /capture-lead/product/<product_id>`
+- `POST /capture-lead/bundle/<bundle_key>`
 - `GET /admin` dashboard
 - `POST /admin/generate` (header: `x-admin-token`)
 - `POST /admin/generate-batch?count=10` (header: `x-admin-token`)
 - `POST /admin/run-payouts` (header: `x-admin-token`)
+- `GET /admin/leads` (header: `x-admin-token`)
+- `GET /admin/deliveries` (header: `x-admin-token`)
 - `POST /webhooks/stripe`
 
 ## Stripe checkout requirements
@@ -79,8 +87,10 @@ Each product checkout link now points to `/checkout/<product_id>` and redirects 
 
 - `data.object.amount_total`
 - `data.object.currency`
-- `data.object.metadata.product_id`
-- `data.object.metadata.venmo_handle`
+- `data.object.metadata.product_id` or `data.object.metadata.bundle_key`
+- `data.object.metadata.lead_id` (optional)
+- `data.object.metadata.order_bump` (`yes`/`no`)
+- `data.object.customer_details.email` (for delivery email)
 
 And header `Stripe-Signature`, verified against `STRIPE_WEBHOOK_SECRET`.
 
@@ -97,9 +107,7 @@ You must configure:
 
 If PayPal credentials are missing, payouts are marked `simulated` so you can test end-to-end behavior safely.
 
-## Production hardening needed
+## Notes
 
-- add authentication and rate limiting
-- add retries/dead-letter for payout failures
-- add legal pages (terms, privacy, refund policy)
-- add analytics and conversion optimization
+- Cover assets are in `static/covers/`.
+- If SMTP is not configured, delivery emails are logged as simulated.

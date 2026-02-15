@@ -5,196 +5,82 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Northstar Studio | Premium Digital Products</title>
   <style>
-    :root {
-      --ink: #0f172a;
-      --muted: #4b5563;
-      --line: #dbe3f0;
-      --surface: #ffffff;
-      --bg: #f4f7fc;
-      --brand: #0b5bd3;
-      --brand-soft: #e7f0ff;
-    }
+    :root { --ink:#111827; --muted:#4b5563; --line:#dbe3f0; --bg:#f4f7fc; --brand:#0b5bd3; --soft:#eef4ff; }
     * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: "Söhne", "Avenir Next", "Segoe UI", sans-serif;
-      color: var(--ink);
-      background:
-        radial-gradient(1200px 500px at 95% -10%, #d6e6ff, transparent),
-        linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
-    }
-    .wrap { max-width: 1120px; margin: 0 auto; padding: 0 1rem; }
-    header {
-      padding: 1.1rem 0;
-      position: sticky;
-      top: 0;
-      backdrop-filter: blur(8px);
-      background: rgba(248, 251, 255, 0.88);
-      border-bottom: 1px solid rgba(219, 227, 240, 0.65);
-      z-index: 20;
-    }
-    .nav { display: flex; justify-content: space-between; align-items: center; }
-    .brand { font-weight: 800; letter-spacing: .2px; }
-    .brand small { color: var(--muted); font-weight: 600; margin-left: .35rem; }
-    .btn {
-      display: inline-block;
-      text-decoration: none;
-      border-radius: 10px;
-      padding: .62rem .95rem;
-      font-weight: 700;
-      border: 1px solid var(--line);
-      color: var(--ink);
-      background: var(--surface);
-    }
-    .btn.primary {
-      background: var(--brand);
-      border-color: var(--brand);
-      color: #fff;
-    }
-    .hero { padding: 3.5rem 0 2.2rem; }
-    .hero-grid {
-      display: grid;
-      grid-template-columns: 1.2fr .8fr;
-      gap: 1rem;
-      align-items: stretch;
-    }
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 1.2rem;
-    }
-    h1 {
-      margin: 0 0 .8rem;
-      font-size: clamp(2rem, 4.5vw, 3.3rem);
-      line-height: 1.07;
-      letter-spacing: -.03em;
-    }
-    .lead {
-      margin: 0 0 1.2rem;
-      color: var(--muted);
-      font-size: 1.08rem;
-      line-height: 1.55;
-    }
-    .actions { display: flex; gap: .6rem; flex-wrap: wrap; }
-    .pills { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .9rem; }
-    .pill {
-      background: var(--brand-soft);
-      color: #184ea6;
-      border: 1px solid #c9dcff;
-      border-radius: 999px;
-      padding: .26rem .58rem;
-      font-size: .78rem;
-      font-weight: 700;
-    }
-    .side-stat {
-      font-size: .95rem;
-      color: var(--muted);
-      margin: 0 0 .55rem;
-    }
-    .side-list { margin: 0; padding-left: 1.05rem; color: var(--ink); }
-    .side-list li { margin: .35rem 0; }
+    body { margin:0; font-family:"Avenir Next","Segoe UI",sans-serif; color:var(--ink); background:linear-gradient(180deg,#f8fbff 0%,var(--bg) 100%); }
+    .wrap { max-width:1140px; margin:0 auto; padding:0 1rem; }
+    header { position:sticky; top:0; z-index:20; backdrop-filter:blur(8px); background:rgba(248,251,255,.9); border-bottom:1px solid rgba(219,227,240,.8); }
+    .nav { display:flex; justify-content:space-between; align-items:center; padding:1rem 0; }
+    .brand { font-weight:800; }
+    .btn { display:inline-block; text-decoration:none; border-radius:10px; padding:.62rem .95rem; font-weight:700; border:1px solid var(--line); color:var(--ink); background:#fff; }
+    .btn.primary { background:var(--brand); color:#fff; border-color:var(--brand); }
 
-    .section { padding: .6rem 0 1.8rem; }
-    .section h2 {
-      margin: 0 0 .7rem;
-      font-size: 1.42rem;
-      letter-spacing: -.01em;
-    }
-    .section p.note { margin: 0 0 1rem; color: var(--muted); }
+    .hero { padding:2.8rem 0 1.6rem; }
+    .hero-box { background:#fff; border:1px solid var(--line); border-radius:16px; padding:1.2rem; }
+    h1 { margin:0 0 .7rem; font-size:clamp(2rem,4.6vw,3.3rem); line-height:1.05; letter-spacing:-.03em; }
+    .lead { margin:0 0 1rem; color:var(--muted); line-height:1.6; max-width:64ch; }
+    .row { display:flex; gap:.55rem; flex-wrap:wrap; }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: .85rem;
-    }
-    .product {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: .95rem;
-      display: flex;
-      flex-direction: column;
-      gap: .4rem;
-      min-height: 220px;
-    }
-    .cat {
-      align-self: flex-start;
-      font-size: .73rem;
-      font-weight: 700;
-      background: #eef3ff;
-      color: #194ead;
-      border: 1px solid #d1deff;
-      border-radius: 999px;
-      padding: .2rem .5rem;
-    }
-    .product h3 {
-      margin: .25rem 0 .15rem;
-      font-size: 1.06rem;
-      line-height: 1.3;
-    }
-    .muted { color: var(--muted); }
-    .price { font-size: 1.2rem; font-weight: 800; margin-top: auto; }
+    .section { padding:1rem 0 1.5rem; }
+    .section h2 { margin:0 0 .55rem; font-size:1.45rem; }
+    .note { margin:0 0 .9rem; color:var(--muted); }
 
-    footer {
-      border-top: 1px solid var(--line);
-      color: var(--muted);
-      padding: 1rem 0 2rem;
-      font-size: .92rem;
-      text-align: center;
-    }
-    @media (max-width: 860px) {
-      .hero-grid { grid-template-columns: 1fr; }
-    }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:.85rem; }
+    .card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:.95rem; display:flex; flex-direction:column; gap:.42rem; }
+    .thumb { height:112px; border-radius:10px; border:1px solid rgba(255,255,255,.45); box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); width:100%; object-fit:cover; background:#e6edf8; }
+    .cat { align-self:flex-start; font-size:.73rem; font-weight:700; background:var(--soft); color:#194ead; border:1px solid #d1deff; border-radius:999px; padding:.2rem .5rem; }
+    .title { margin:.15rem 0; font-size:1.04rem; }
+    .muted { color:var(--muted); }
+    .price { margin-top:auto; font-weight:800; font-size:1.18rem; }
+
+    .bundles { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:.85rem; }
+    .bundle { background:#fff; border:1px solid var(--line); border-radius:14px; padding:1rem; }
+    .bundle h3 { margin:0 0 .3rem; }
+    .bundle ul { margin:.45rem 0 .75rem; padding-left:1.1rem; }
+
+    .proof { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:.8rem; }
+    blockquote { margin:0; background:#fff; border:1px solid var(--line); border-radius:14px; padding:.95rem; line-height:1.55; }
+    blockquote footer { margin-top:.5rem; color:var(--muted); font-size:.85rem; }
+
+    .faq details { background:#fff; border:1px solid var(--line); border-radius:12px; padding:.7rem .9rem; margin-bottom:.55rem; }
+    .faq summary { font-weight:700; cursor:pointer; }
+    .faq p { margin:.5rem 0 0; color:var(--muted); }
+
+    .cta { background:#0f172a; color:#fff; border-radius:16px; padding:1.05rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:.7rem; }
+    .cta p { margin:0; color:#cdd7ea; }
+    footer { border-top:1px solid var(--line); color:var(--muted); padding:1rem 0 2rem; font-size:.92rem; text-align:center; }
   </style>
 </head>
 <body>
   <header>
     <div class="wrap nav">
-      <div class="brand">Northstar Studio <small>Digital Product Company</small></div>
-      <div>
-        <a class="btn" href="/store">Catalog</a>
-      </div>
+      <div class="brand">Northstar Studio</div>
+      <a class="btn" href="/store">Shop Catalog</a>
     </div>
   </header>
 
   <main class="wrap">
     <section class="hero">
-      <div class="hero-grid">
-        <div class="card">
-          <h1>Retail-ready digital products built for real business outcomes.</h1>
-          <p class="lead">Northstar Studio creates premium templates and toolkits for creators, operators, freelancers, and small business owners. Every product is designed for speed, clarity, and immediate practical use.</p>
-          <div class="actions">
-            <a class="btn primary" href="/store">Shop The Collection</a>
-            <a class="btn" href="/store">View Categories</a>
-          </div>
-          <div class="pills">
-            {% for c in categories[:6] %}
-            <span class="pill">{{ c }}</span>
-            {% endfor %}
-          </div>
+      <div class="hero-box">
+        <h1>Digital products that look premium and perform in the real world.</h1>
+        <p class="lead">Purpose-built templates and toolkits for creators, freelancers, and operators. Every product is structured for fast implementation, clear deliverables, and immediate business use.</p>
+        <div class="row">
+          <a class="btn primary" href="/store">Shop Best Sellers</a>
+          <a class="btn" href="/store">Browse All Products</a>
         </div>
-        <aside class="card">
-          <p class="side-stat"><strong>What buyers expect from this store</strong></p>
-          <ul class="side-list">
-            <li>Clear deliverables before purchase</li>
-            <li>Professional copy and formatting</li>
-            <li>Immediate checkout and digital access workflow</li>
-            <li>Products aligned to active online demand areas</li>
-          </ul>
-        </aside>
       </div>
     </section>
 
     <section class="section">
       <h2>Featured Products</h2>
-      <p class="note">Built around high-intent purchase topics across creator growth, operations, career tools, ecommerce, and productivity.</p>
+      <p class="note">High-intent categories chosen from active online demand themes.</p>
       <div class="grid">
         {% for p in products %}
-        <article class="product">
+        <article class="card">
+          <img class="thumb" src="{{ p.cover_image }}" alt="{{ p.title }} cover">
           <span class="cat">{{ p.category }}</span>
-          <h3>{{ p.title }}</h3>
-          <p class="muted">{{ p.tagline }}</p>
+          <h3 class="title">{{ p.title }}</h3>
+          <p class="muted"><strong>{{ p.tagline }}</strong></p>
           <p class="muted">{{ p.description }}</p>
           <p class="price">${{ "%.2f"|format(p.price_cents / 100) }}</p>
           <a class="btn primary" href="/products/{{ p.id }}">Preview Product</a>
@@ -202,10 +88,62 @@
         {% endfor %}
       </div>
     </section>
+
+    <section class="section">
+      <h2>Bundle Offers</h2>
+      <div class="bundles">
+        {% for b in bundles %}
+        <article class="bundle">
+          <h3>{{ b["title"] }}</h3>
+          <p class="note">{{ b["description"] }}</p>
+          <ul>
+            {% for item in b["items"] %}
+            <li>{{ item.title }}</li>
+            {% endfor %}
+          </ul>
+          <p><strong>${{ "%.2f"|format(b["price_cents"] / 100) }}</strong> bundle price</p>
+          <a class="btn primary" href="/bundle/{{ b['key'] }}">View Bundle</a>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>What Customers Say</h2>
+      <div class="proof">
+        <blockquote>
+          "I launched two offers in one weekend using these templates. Clear structure, zero fluff."
+          <footer>Founder, coaching brand</footer>
+        </blockquote>
+        <blockquote>
+          "The operations bundle immediately improved onboarding and invoice turnaround."
+          <footer>Independent consultant</footer>
+        </blockquote>
+        <blockquote>
+          "Best template store I've used in terms of clarity before purchase."
+          <footer>Ecommerce operator</footer>
+        </blockquote>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>FAQ</h2>
+      <div class="faq">
+        <details><summary>Who are these products for?</summary><p>Creators, freelancers, operators, and small businesses needing implementation-ready systems.</p></details>
+        <details><summary>Can I preview before buying?</summary><p>Yes. Each product page includes sample content and deliverables before checkout.</p></details>
+        <details><summary>What if it is not a fit?</summary><p>All purchases include a 7-day satisfaction guarantee if deliverables do not match listing details.</p></details>
+      </div>
+    </section>
+
+    <section class="cta">
+      <div>
+        <h2 style="margin:0 0 .2rem 0;">Ready to upgrade your workflow?</h2>
+        <p>Start with one product or save with a curated bundle.</p>
+      </div>
+      <a class="btn primary" href="/store">Shop Now</a>
+    </section>
   </main>
 
-  <footer>
-    Northstar Studio. Premium digital product templates for modern online businesses.
-  </footer>
+  <footer>Northstar Studio. Premium digital products for modern online businesses.</footer>
 </body>
 </html>

@@ -113,6 +113,46 @@
           </tbody>
         </table>
       </section>
+
+      <section class="card">
+        <h2>Abandoned Leads <span class="pill">{{ leads|length }}</span></h2>
+        <table>
+          <thead>
+            <tr><th>Email</th><th>Source</th><th>Status</th><th>Copy</th><th>Created</th></tr>
+          </thead>
+          <tbody>
+            {% for l in leads %}
+            <tr>
+              <td>{{ l.email }}</td>
+              <td>{{ l.source }}</td>
+              <td>{{ l.status }}</td>
+              <td>{{ l.followup_subject }}</td>
+              <td>{{ l.created_at }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+
+      <section class="card">
+        <h2>Delivery Events <span class="pill">{{ deliveries|length }}</span></h2>
+        <table>
+          <thead>
+            <tr><th>Email</th><th>Sale ID</th><th>Status</th><th>Note</th><th>Created</th></tr>
+          </thead>
+          <tbody>
+            {% for d in deliveries %}
+            <tr>
+              <td>{{ d.email }}</td>
+              <td>{{ d.sale_id[:8] }}</td>
+              <td>{{ d.status }}</td>
+              <td>{{ d.note }}</td>
+              <td>{{ d.created_at }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
     </div>
   </main>
 </body>

@@ -4,9 +4,11 @@ import hmac
 import json
 import os
 import sqlite3
+import smtplib
 import threading
 import uuid
 from datetime import datetime, timezone
+from email.message import EmailMessage
 from urllib import parse, request
 from urllib.error import HTTPError, URLError
 
@@ -25,10 +27,15 @@ PAYPAL_CLIENT_ID = os.getenv("PAYPAL_CLIENT_ID", "")
 PAYPAL_CLIENT_SECRET = os.getenv("PAYPAL_CLIENT_SECRET", "")
 PAYPAL_ENV = os.getenv("PAYPAL_ENV", "sandbox")
 PAYOUT_SENDER_EMAIL = os.getenv("PAYOUT_SENDER_EMAIL", "")
+SMTP_HOST = os.getenv("SMTP_HOST", "")
+SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+SMTP_USER = os.getenv("SMTP_USER", "")
+SMTP_PASS = os.getenv("SMTP_PASS", "")
+SMTP_FROM = os.getenv("SMTP_FROM", "")
 
 PAYPAL_BASE = "https://api-m.paypal.com" if PAYPAL_ENV == "live" else "https://api-m.sandbox.paypal.com"
 
-app = Flask(__name__, template_folder="../templates")
+app = Flask(__name__, template_folder="../templates", static_folder="../static")
 
 
 CATALOG_PRODUCTS = [
@@ -244,9 +251,62 @@ CATALOG_PRODUCTS = [
 
 CATALOG_BY_TITLE = {item["title"]: item for item in CATALOG_PRODUCTS}
 
+ORDER_BUMP = {
+    "name": "Template Quickstart Video Companion",
+    "price_cents": 900,
+}
+
+BUNDLES = [
+    {
+        "key": "creator-revenue",
+        "title": "Creator Revenue Bundle",
+        "description": "Growth and launch assets for creator-led businesses.",
+        "product_titles": ["Creator Caption Vault", "Short-Form Hook Library", "Course Launch Planner"],
+        "discount_cents": 1200,
+    },
+    {
+        "key": "freelancer-ops",
+        "title": "Freelancer Ops Bundle",
+        "description": "Contracts, systems, and finance assets for service operators.",
+        "product_titles": ["Freelance Client Pack", "SOP Manual for Small Teams", "Budget & Cashflow Spreadsheet Pro"],
+        "discount_cents": 1400,
+    },
+    {
+        "key": "lifestyle-utility",
+        "title": "Lifestyle Utility Bundle",
+        "description": "Personal productivity and family planning digital systems.",
+        "product_titles": ["Meal Prep Planner + Grocery System", "Kids Chore & Reward Chart Pack", "Notion Operator System"],
+        "discount_cents": 900,
+    },
+]
+
+CATEGORY_THEME = {
+    "Creator Growth": ("#3b82f6", "#8b5cf6"),
+    "Creator Business": ("#0ea5e9", "#2563eb"),
+    "Productivity": ("#0891b2", "#0ea5e9"),
+    "Finance": ("#059669", "#10b981"),
+    "Career": ("#2563eb", "#1d4ed8"),
+    "Freelance Ops": ("#7c3aed", "#4f46e5"),
+    "Events": ("#db2777", "#f43f5e"),
+    "Hospitality": ("#f59e0b", "#d97706"),
+    "Ecommerce": ("#0d9488", "#14b8a6"),
+    "Wellness": ("#16a34a", "#22c55e"),
+    "Family": ("#ea580c", "#f97316"),
+    "Operations": ("#334155", "#1f2937"),
+    "Branding": ("#4f46e5", "#2563eb"),
+    "Real Estate": ("#0369a1", "#0284c7"),
+}
+
 
 def utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def slugify(value: str) -> str:
+    raw = "".join(c.lower() if c.isalnum() else "-" for c in value).strip("-")
+    while "--" in raw:
+        raw = raw.replace("--", "-")
+    return raw or "product"
 
 
 def db() -> sqlite3.Connection:
@@ -258,7 +318,9 @@ def db() -> sqlite3.Connection:
 
 def enrich_product(product: dict) -> dict:
     details = CATALOG_BY_TITLE.get(product.get("title", ""), {})
-    product["category"] = details.get("category", "General")
+    category = details.get("category", "General")
+    theme_start, theme_end = CATEGORY_THEME.get(category, ("#2563eb", "#1d4ed8"))
+    product["category"] = category
     product["tagline"] = details.get("tagline", "High-value digital toolkit.")
     product["description"] = details.get(
         "description",
@@ -272,6 +334,10 @@ def enrich_product(product: dict) -> dict:
         "preview_snippet",
         "Sample preview will be provided after purchase.",
     )
+    product["theme_start"] = theme_start
+    product["theme_end"] = theme_end
+    slug = slugify(product.get("title", "product"))
+    product["cover_image"] = f"/static/covers/{slug}.svg"
     return product
 
 
@@ -315,6 +381,32 @@ def init_db() -> None:
             provider_batch_id TEXT,
             note TEXT,
             updated_at TEXT NOT NULL
+        )
+        """
+    )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS leads (
+            id TEXT PRIMARY KEY,
+            email TEXT NOT NULL,
+            source TEXT NOT NULL,
+            product_id TEXT,
+            bundle_key TEXT,
+            status TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            converted_at TEXT
+        )
+        """
+    )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS deliveries (
+            id TEXT PRIMARY KEY,
+            sale_id TEXT NOT NULL,
+            email TEXT NOT NULL,
+            status TEXT NOT NULL,
+            note TEXT,
+            created_at TEXT NOT NULL
         )
         """
     )
@@ -446,6 +538,112 @@ def ensure_min_products(min_products: int) -> int:
     return to_create
 
 
+def get_bundle(bundle_key: str) -> dict | None:
+    for bundle in BUNDLES:
+        if bundle["key"] == bundle_key:
+            items = [CATALOG_BY_TITLE[t] for t in bundle["product_titles"] if t in CATALOG_BY_TITLE]
+            subtotal = sum(int(i["price_cents"]) for i in items)
+            discount = int(bundle["discount_cents"])
+            price_cents = max(100, subtotal - discount)
+            return {
+                "key": bundle["key"],
+                "title": bundle["title"],
+                "description": bundle["description"],
+                "items": items,
+                "subtotal_cents": subtotal,
+                "discount_cents": discount,
+                "price_cents": price_cents,
+            }
+    return None
+
+
+def list_bundles() -> list[dict]:
+    bundles = [b for b in (get_bundle(x["key"]) for x in BUNDLES) if b]
+    for bundle in bundles:
+        first = bundle["items"][0] if bundle["items"] else None
+        if first:
+            bundle["cover_image"] = enrich_product({"title": first["title"]})["cover_image"]
+            cat = first.get("category", "General")
+            s, e = CATEGORY_THEME.get(cat, ("#2563eb", "#1d4ed8"))
+            bundle["theme_start"] = s
+            bundle["theme_end"] = e
+        else:
+            bundle["cover_image"] = ""
+            bundle["theme_start"] = "#2563eb"
+            bundle["theme_end"] = "#1d4ed8"
+    return bundles
+
+
+def is_valid_email(email: str) -> bool:
+    if "@" not in email:
+        return False
+    if "." not in email.split("@", 1)[-1]:
+        return False
+    return 5 <= len(email) <= 320
+
+
+def create_lead(email: str, source: str, product_id: str | None = None, bundle_key: str | None = None) -> str:
+    lead_id = str(uuid.uuid4())
+    conn = db()
+    conn.execute(
+        "INSERT INTO leads (id, email, source, product_id, bundle_key, status, created_at, converted_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        (lead_id, email.lower().strip(), source, product_id, bundle_key, "captured", utc_now_iso(), None),
+    )
+    conn.commit()
+    conn.close()
+    return lead_id
+
+
+def mark_lead_converted(lead_id: str) -> None:
+    if not lead_id:
+        return
+    conn = db()
+    conn.execute(
+        "UPDATE leads SET status = ?, converted_at = ? WHERE id = ?",
+        ("converted", utc_now_iso(), lead_id),
+    )
+    conn.commit()
+    conn.close()
+
+
+def list_recent_abandoned_leads(limit: int = 30) -> list[dict]:
+    conn = db()
+    rows = conn.execute(
+        "SELECT id, email, source, product_id, bundle_key, status, created_at FROM leads WHERE status = 'captured' ORDER BY created_at DESC LIMIT ?",
+        (limit,),
+    ).fetchall()
+    conn.close()
+    leads = [dict(r) for r in rows]
+    for lead in leads:
+        lead["followup_subject"] = "Quick follow-up on your template checkout"
+        lead["followup_body"] = (
+            "Hi,\\n\\nYou started checkout but did not finish. If you still want the template pack, "
+            "you can complete your order here: https://revenue-bot-ktqu.onrender.com/store\\n\\n"
+            "Reply if you want help choosing the right product.\\n\\n- Northstar Studio"
+        )
+    return leads
+
+
+def list_recent_deliveries(limit: int = 30) -> list[dict]:
+    conn = db()
+    rows = conn.execute(
+        "SELECT id, sale_id, email, status, note, created_at FROM deliveries ORDER BY created_at DESC LIMIT ?",
+        (limit,),
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def log_delivery(sale_id: str, email: str, status: str, note: str) -> None:
+    conn = db()
+    conn.execute(
+        "INSERT INTO deliveries (id, sale_id, email, status, note, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+        (str(uuid.uuid4()), sale_id, email, status, note, utc_now_iso()),
+    )
+    conn.commit()
+    conn.close()
+
+
 def public_base_url() -> str:
     configured = APP_PUBLIC_URL.strip()
     if configured:
@@ -453,24 +651,30 @@ def public_base_url() -> str:
     return flask_request.url_root.rstrip("/")
 
 
-def create_stripe_checkout_session(product: dict, venmo_handle: str) -> str:
+def create_stripe_checkout_session(
+    *,
+    line_items: list[dict],
+    success_url: str,
+    cancel_url: str,
+    metadata: dict[str, str],
+) -> str:
     if not STRIPE_SECRET_KEY:
         raise ValueError("missing STRIPE_SECRET_KEY")
 
-    base_url = public_base_url()
-    payload: list[tuple[str, str]] = [
-        ("mode", "payment"),
-        ("success_url", f"{base_url}/products/{product['id']}?checkout=success"),
-        ("cancel_url", f"{base_url}/products/{product['id']}?checkout=cancel"),
-        ("line_items[0][price_data][currency]", "usd"),
-        ("line_items[0][price_data][unit_amount]", str(product["price_cents"])),
-        ("line_items[0][price_data][product_data][name]", product["title"]),
-        ("line_items[0][quantity]", "1"),
-        ("metadata[product_id]", product["id"]),
-    ]
+    payload: list[tuple[str, str]] = [("mode", "payment"), ("success_url", success_url), ("cancel_url", cancel_url)]
+    for idx, item in enumerate(line_items):
+        payload.extend(
+            [
+                (f"line_items[{idx}][price_data][currency]", "usd"),
+                (f"line_items[{idx}][price_data][unit_amount]", str(int(item["price_cents"]))),
+                (f"line_items[{idx}][price_data][product_data][name]", item["name"]),
+                (f"line_items[{idx}][quantity]", "1"),
+            ]
+        )
 
-    if venmo_handle:
-        payload.append(("metadata[venmo_handle]", venmo_handle))
+    for k, v in metadata.items():
+        if v:
+            payload.append((f"metadata[{k}]", v))
 
     body = parse.urlencode(payload).encode("utf-8")
     req = request.Request(
@@ -489,6 +693,106 @@ def create_stripe_checkout_session(product: dict, venmo_handle: str) -> str:
         if not session_url:
             raise ValueError("stripe response missing session URL")
         return session_url
+
+
+def create_product_checkout_session(product: dict, add_bump: bool, lead_id: str) -> str:
+    base_url = public_base_url()
+    items = [{"name": product["title"], "price_cents": int(product["price_cents"])}]
+    if add_bump:
+        items.append({"name": ORDER_BUMP["name"], "price_cents": int(ORDER_BUMP["price_cents"])})
+
+    return create_stripe_checkout_session(
+        line_items=items,
+        success_url=f"{base_url}/products/{product['id']}?checkout=success",
+        cancel_url=f"{base_url}/products/{product['id']}?checkout=cancel",
+        metadata={
+            "product_id": product["id"],
+            "lead_id": lead_id,
+            "order_bump": "yes" if add_bump else "no",
+            "venmo_handle": PAYOUT_SENDER_EMAIL,
+        },
+    )
+
+
+def create_bundle_checkout_session(bundle: dict, add_bump: bool, lead_id: str) -> str:
+    base_url = public_base_url()
+    line_items = [{"name": i["title"], "price_cents": int(i["price_cents"])} for i in bundle["items"]]
+    # Apply bundle discount as a single negative-cost equivalent by reducing each line item's price proportionally.
+    # Simpler for MVP: replace with one bundle line item at discounted total.
+    line_items = [{"name": bundle["title"], "price_cents": int(bundle["price_cents"])}]
+    if add_bump:
+        line_items.append({"name": ORDER_BUMP["name"], "price_cents": int(ORDER_BUMP["price_cents"])})
+
+    return create_stripe_checkout_session(
+        line_items=line_items,
+        success_url=f"{base_url}/bundle/{bundle['key']}?checkout=success",
+        cancel_url=f"{base_url}/bundle/{bundle['key']}?checkout=cancel",
+        metadata={
+            "bundle_key": bundle["key"],
+            "lead_id": lead_id,
+            "order_bump": "yes" if add_bump else "no",
+            "venmo_handle": PAYOUT_SENDER_EMAIL,
+        },
+    )
+
+
+def send_email(to_email: str, subject: str, body: str) -> tuple[bool, str]:
+    if not SMTP_HOST or not SMTP_FROM:
+        return True, "simulated (smtp not configured)"
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = SMTP_FROM
+    msg["To"] = to_email
+    msg.set_content(body)
+
+    try:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as server:
+            server.starttls()
+            if SMTP_USER:
+                server.login(SMTP_USER, SMTP_PASS)
+            server.send_message(msg)
+        return True, "sent"
+    except Exception as exc:
+        return False, str(exc)
+
+
+def handle_post_purchase_delivery(event: dict, sale_id: str) -> tuple[bool, str]:
+    data_object = event.get("data", {}).get("object", {})
+    metadata = data_object.get("metadata", {})
+    customer_details = data_object.get("customer_details", {}) or {}
+    email = (customer_details.get("email") or data_object.get("customer_email") or "").strip().lower()
+    if not email:
+        return False, "missing customer email in checkout session"
+
+    product_id = metadata.get("product_id", "")
+    bundle_key = metadata.get("bundle_key", "")
+    order_bump = metadata.get("order_bump", "no")
+    base_url = APP_PUBLIC_URL.strip() or "https://revenue-bot-ktqu.onrender.com"
+
+    lines = [
+        "Thanks for your purchase from Northstar Studio.",
+        "",
+        "Your access links:",
+    ]
+    if product_id:
+        product = get_product(product_id)
+        if product:
+            lines.append(f"- {product['title']}: {base_url}/products/{product_id}")
+    if bundle_key:
+        lines.append(f"- Bundle access page: {base_url}/bundle/{bundle_key}")
+    if order_bump == "yes":
+        lines.append(f"- {ORDER_BUMP['name']}: {base_url}/store")
+    lines.extend(
+        [
+            "",
+            "If you need support or a refund request, reply to this email within 7 days.",
+            "",
+            "Northstar Studio",
+        ]
+    )
+    ok, note = send_email(email, "Your Northstar Studio purchase access", "\n".join(lines))
+    log_delivery(sale_id=sale_id, email=email, status="sent" if ok else "failed", note=note)
+    return ok, note
 
 
 def verify_stripe_signature(raw_body: bytes, header: str) -> bool:
@@ -521,7 +825,8 @@ def upsert_sale_and_payout(event: dict) -> tuple[str, str]:
 
     data_object = event.get("data", {}).get("object", {})
     product_id = data_object.get("metadata", {}).get("product_id") or "unknown"
-    venmo_handle = data_object.get("metadata", {}).get("venmo_handle") or ""
+    venmo_handle = data_object.get("metadata", {}).get("venmo_handle") or PAYOUT_SENDER_EMAIL or ""
+    lead_id = data_object.get("metadata", {}).get("lead_id") or ""
     amount_cents = int(data_object.get("amount_total") or 0)
     currency = (data_object.get("currency") or "usd").upper()
     provider_event_id = event.get("id", "")
@@ -537,6 +842,7 @@ def upsert_sale_and_payout(event: dict) -> tuple[str, str]:
     )
     conn.commit()
     conn.close()
+    mark_lead_converted(lead_id)
     return sale_id, payout_id
 
 
@@ -643,14 +949,14 @@ def landing():
     products = list_products()
     featured = products[:8]
     categories = sorted({p["category"] for p in products})
-    return render_template("landing.html", products=featured, categories=categories)
+    return render_template("landing.html", products=featured, categories=categories, bundles=list_bundles())
 
 
 @app.get("/store")
 def store():
     products = list_products()
     categories = sorted({p["category"] for p in products})
-    return render_template("store.html", products=products, categories=categories)
+    return render_template("store.html", products=products, categories=categories, bundles=list_bundles())
 
 
 @app.get("/products/<product_id>")
@@ -659,7 +965,34 @@ def product_detail(product_id: str):
     if not product:
         return jsonify({"error": "product not found"}), 404
     checkout_status = flask_request.args.get("checkout", "")
-    return render_template("product.html", product=product, checkout_status=checkout_status)
+    lead_id = flask_request.args.get("lead_id", "")
+    lead_status = flask_request.args.get("lead", "")
+    return render_template(
+        "product.html",
+        product=product,
+        checkout_status=checkout_status,
+        lead_id=lead_id,
+        lead_status=lead_status,
+        order_bump=ORDER_BUMP,
+    )
+
+
+@app.get("/bundle/<bundle_key>")
+def bundle_detail(bundle_key: str):
+    bundle = get_bundle(bundle_key)
+    if not bundle:
+        return jsonify({"error": "bundle not found"}), 404
+    checkout_status = flask_request.args.get("checkout", "")
+    lead_id = flask_request.args.get("lead_id", "")
+    lead_status = flask_request.args.get("lead", "")
+    return render_template(
+        "bundle.html",
+        bundle=bundle,
+        checkout_status=checkout_status,
+        lead_id=lead_id,
+        lead_status=lead_status,
+        order_bump=ORDER_BUMP,
+    )
 
 
 @app.get("/admin")
@@ -672,7 +1005,9 @@ def dashboard():
     ).fetchall()
     conn.close()
     payouts = [dict(r) for r in payout_rows]
-    return render_template("index.html", products=products, payouts=payouts)
+    leads = list_recent_abandoned_leads(limit=20)
+    deliveries = list_recent_deliveries(limit=20)
+    return render_template("index.html", products=products, payouts=payouts, leads=leads, deliveries=deliveries)
 
 
 @app.get("/health")
@@ -691,9 +1026,10 @@ def checkout(product_id: str):
     if not product:
         return jsonify({"error": "product not found"}), 404
 
-    venmo_handle = (flask_request.args.get("venmo_handle") or "").strip()
+    lead_id = (flask_request.args.get("lead_id") or "").strip()
+    add_bump = flask_request.args.get("add_bump", "0") == "1"
     try:
-        session_url = create_stripe_checkout_session(product, venmo_handle)
+        session_url = create_product_checkout_session(product, add_bump=add_bump, lead_id=lead_id)
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 503
     except HTTPError as exc:
@@ -703,6 +1039,55 @@ def checkout(product_id: str):
         return jsonify({"error": "stripe network error", "detail": str(exc)}), 502
 
     return redirect(session_url, code=302)
+
+
+@app.get("/checkout/bundle/<bundle_key>")
+def checkout_bundle(bundle_key: str):
+    bundle = get_bundle(bundle_key)
+    if not bundle:
+        return jsonify({"error": "bundle not found"}), 404
+
+    lead_id = (flask_request.args.get("lead_id") or "").strip()
+    add_bump = flask_request.args.get("add_bump", "0") == "1"
+    try:
+        session_url = create_bundle_checkout_session(bundle, add_bump=add_bump, lead_id=lead_id)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 503
+    except HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="ignore")
+        return jsonify({"error": "stripe api error", "detail": detail}), 502
+    except URLError as exc:
+        return jsonify({"error": "stripe network error", "detail": str(exc)}), 502
+
+    return redirect(session_url, code=302)
+
+
+@app.post("/capture-lead/product/<product_id>")
+def capture_product_lead(product_id: str):
+    product = get_product(product_id)
+    if not product:
+        return jsonify({"error": "product not found"}), 404
+
+    email = (flask_request.form.get("email") or "").strip().lower()
+    if not is_valid_email(email):
+        return redirect(f"/products/{product_id}?lead=invalid")
+
+    lead_id = create_lead(email=email, source="product_page", product_id=product_id)
+    return redirect(f"/products/{product_id}?lead=captured&lead_id={lead_id}")
+
+
+@app.post("/capture-lead/bundle/<bundle_key>")
+def capture_bundle_lead(bundle_key: str):
+    bundle = get_bundle(bundle_key)
+    if not bundle:
+        return jsonify({"error": "bundle not found"}), 404
+
+    email = (flask_request.form.get("email") or "").strip().lower()
+    if not is_valid_email(email):
+        return redirect(f"/bundle/{bundle_key}?lead=invalid")
+
+    lead_id = create_lead(email=email, source="bundle_page", bundle_key=bundle_key)
+    return redirect(f"/bundle/{bundle_key}?lead=captured&lead_id={lead_id}")
 
 
 @app.post("/admin/generate")
@@ -738,6 +1123,20 @@ def admin_run_payouts():
     return jsonify(result)
 
 
+@app.get("/admin/leads")
+def admin_leads():
+    if not admin_guard():
+        return jsonify({"error": "unauthorized"}), 401
+    return jsonify({"leads": list_recent_abandoned_leads(limit=50)})
+
+
+@app.get("/admin/deliveries")
+def admin_deliveries():
+    if not admin_guard():
+        return jsonify({"error": "unauthorized"}), 401
+    return jsonify({"deliveries": list_recent_deliveries(limit=50)})
+
+
 @app.post("/webhooks/stripe")
 def stripe_webhook():
     raw = flask_request.get_data(cache=False)
@@ -751,7 +1150,16 @@ def stripe_webhook():
         return jsonify({"received": True, "ignored": True})
 
     sale_id, payout_id = upsert_sale_and_payout(event)
-    return jsonify({"received": True, "sale_id": sale_id, "payout_id": payout_id})
+    delivery_ok, delivery_note = handle_post_purchase_delivery(event, sale_id=sale_id)
+    return jsonify(
+        {
+            "received": True,
+            "sale_id": sale_id,
+            "payout_id": payout_id,
+            "delivery_sent": delivery_ok,
+            "delivery_note": delivery_note,
+        }
+    )
 
 
 def auto_generator_loop(stop_event: threading.Event) -> None:

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ product.title }} | Northstar Studio</title>
+  <title>{{ bundle.title }} | Northstar Studio</title>
   <style>
     :root { --ink:#111827; --muted:#4b5563; --line:#dbe3f0; --bg:#f4f7fc; --brand:#0b5bd3; --ok:#1e7f42; --warn:#a35200; }
     * { box-sizing: border-box; }
@@ -19,26 +19,18 @@
     .layout { display:grid; grid-template-columns:1.2fr .8fr; gap:.95rem; align-items:start; }
     .card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:1rem; }
     .thumb { height:180px; border-radius:12px; margin-bottom:.7rem; width:100%; object-fit:cover; background:#e6edf8; }
-    .cat { display:inline-block; font-size:.75rem; font-weight:700; background:#eef3ff; color:#1d4fb0; border:1px solid #d1deff; border-radius:999px; padding:.2rem .55rem; margin-bottom:.45rem; }
-    h1 { margin:0 0 .35rem; font-size:clamp(1.6rem,3.6vw,2.5rem); line-height:1.1; letter-spacing:-.02em; }
-    .tagline { margin:0 0 .45rem; color:#243a64; font-weight:700; }
+    h1 { margin:0 0 .35rem; font-size:2.1rem; line-height:1.12; }
     .desc { margin:0 0 .8rem; color:var(--muted); line-height:1.6; }
-    .price { margin:0 0 1rem; font-size:2rem; font-weight:800; }
-    h3 { margin:1rem 0 .5rem; }
-    ul { margin:0; padding-left:1.1rem; }
-    li { margin:.38rem 0; }
-    .preview { margin-top:.55rem; background:#f8fbff; border:1px solid var(--line); border-radius:10px; padding:.95rem; color:#27344f; line-height:1.65; font-size:1rem; }
-
+    .price { margin:0 0 .5rem; font-size:2rem; font-weight:800; }
+    .small { color:var(--muted); font-size:.88rem; line-height:1.45; }
     .status { margin-bottom:.7rem; padding:.6rem .75rem; border-radius:10px; font-size:.92rem; border:1px solid var(--line); background:#f8fbff; }
     .status.ok { color:var(--ok); border-color:#bce4c8; background:#f2fcf5; }
     .status.warn { color:var(--warn); border-color:#f1d2b1; background:#fff8f1; }
-
-    .small { color:var(--muted); font-size:.88rem; line-height:1.45; }
-    .trust { margin-top:.8rem; padding:.7rem; border-radius:10px; border:1px solid #d6e4ff; background:#f2f7ff; font-size:.88rem; color:#24406f; }
+    ul { margin:0; padding-left:1.1rem; }
+    li { margin:.4rem 0; }
     label { display:block; font-size:.88rem; font-weight:700; margin:.45rem 0 .25rem; color:#31476f; }
     input[type="email"] { width:100%; border:1px solid var(--line); border-radius:10px; padding:.62rem .72rem; font-size:.98rem; }
     .inline { display:flex; align-items:flex-start; gap:.45rem; margin:.55rem 0; font-size:.9rem; color:#334155; }
-
     @media (max-width:880px) { .layout { grid-template-columns:1fr; } }
   </style>
 </head>
@@ -58,22 +50,23 @@
 
     <section class="layout">
       <article class="card">
-        <img class="thumb" src="{{ product.cover_image }}" alt="{{ product.title }} cover">
-        <span class="cat">{{ product.category }}</span>
-        <h1>{{ product.title }}</h1>
-        <p class="tagline">{{ product.tagline }}</p>
-        <p class="desc">{{ product.description }}</p>
-        <p class="price">${{ "%.2f"|format(product.price_cents / 100) }}</p>
-        <h3>Included In This Product</h3>
-        <ul>{% for item in product.preview_items %}<li>{{ item }}</li>{% endfor %}</ul>
-        <h3>Preview Excerpt</h3>
-        <p class="preview">{{ product.preview_snippet }}</p>
+        <img class="thumb" src="{{ bundle['cover_image'] }}" alt="{{ bundle['title'] }} cover">
+        <h1>{{ bundle['title'] }}</h1>
+        <p class="desc">{{ bundle['description'] }}</p>
+        <p class="price">${{ "%.2f"|format(bundle['price_cents'] / 100) }}</p>
+        <p class="small">Includes savings of ${{ "%.2f"|format(bundle['discount_cents'] / 100) }} vs. buying separately.</p>
+        <h3>Included Products</h3>
+        <ul>
+          {% for item in bundle["items"] %}
+          <li><strong>{{ item.title }}</strong> - ${{ "%.2f"|format(item.price_cents / 100) }}</li>
+          {% endfor %}
+        </ul>
       </article>
 
       <aside class="card">
-        <h3>Reserve This Offer</h3>
-        <p class="small">Save your email for reminder follow-up and fast return checkout.</p>
-        <form action="/capture-lead/product/{{ product.id }}" method="POST">
+        <h3>Reserve This Bundle</h3>
+        <p class="small">Save your email for reminder follow-up and return checkout.</p>
+        <form action="/capture-lead/bundle/{{ bundle['key'] }}" method="POST">
           <label for="email">Email address</label>
           <input id="email" name="email" type="email" placeholder="you@example.com" required>
           <button class="btn" type="submit">Save My Offer</button>
@@ -82,12 +75,11 @@
         <hr style="margin:1rem 0;border:none;border-top:1px solid var(--line)">
 
         <h3>Secure Checkout</h3>
-        <form action="/checkout/{{ product.id }}" method="GET">
+        <form action="/checkout/bundle/{{ bundle['key'] }}" method="GET">
           <input type="hidden" name="lead_id" value="{{ lead_id }}">
           <label class="inline"><input type="checkbox" name="add_bump" value="1"> Add {{ order_bump.name }} (+${{ "%.2f"|format(order_bump.price_cents / 100) }})</label>
-          <button class="btn primary" type="submit">Buy Now</button>
+          <button class="btn primary" type="submit">Buy Bundle</button>
         </form>
-        <div class="trust">7-day satisfaction guarantee. If deliverables do not match listing details, request a full refund within 7 days.</div>
       </aside>
     </section>
   </main>
