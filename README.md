@@ -11,6 +11,8 @@ This app provides a production-style digital storefront pipeline:
 - post-purchase delivery emails (SMTP or simulated mode)
 - payout queue processing to Venmo via PayPal Payouts
 - Etsy OAuth connection + draft listing publishing from admin
+- Gumroad token-based draft publishing from admin
+- Shopify token-based draft publishing from admin
 
 ## Stack
 
@@ -47,7 +49,9 @@ Open: `http://localhost:8080`
 4. Set required secrets in Render: `APP_PUBLIC_URL`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYOUT_SENDER_EMAIL`.
 5. (Optional) set SMTP vars for automated delivery emails: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`.
 6. (Optional) set Etsy vars for marketplace publishing: `ETSY_CLIENT_ID`, `ETSY_CLIENT_SECRET`, `ETSY_REDIRECT_URI`, `ETSY_SCOPES`.
-7. Open your Render service URL once deployment finishes.
+7. (Optional) set Gumroad vars: `GUMROAD_ACCESS_TOKEN`.
+8. (Optional) set Shopify vars: `SHOPIFY_STORE_DOMAIN`, `SHOPIFY_ACCESS_TOKEN`, `SHOPIFY_API_VERSION`.
+9. Open your Render service URL once deployment finishes.
 
 Notes:
 - This uses `DATABASE_PATH=/tmp/revenue_bot.db` on Render free tier (ephemeral storage).
@@ -70,6 +74,10 @@ Notes:
 - `GET /connect/etsy/callback` (OAuth callback)
 - `POST /admin/publish/etsy/<product_id>` (header `x-admin-token` or form/query `admin_token`)
 - `POST /admin/publish/etsy-all` (header `x-admin-token` or form/query `admin_token`)
+- `POST /admin/publish/gumroad/<product_id>` (header `x-admin-token` or form/query `admin_token`)
+- `POST /admin/publish/gumroad-all` (header `x-admin-token` or form/query `admin_token`)
+- `POST /admin/publish/shopify/<product_id>` (header `x-admin-token` or form/query `admin_token`)
+- `POST /admin/publish/shopify-all` (header `x-admin-token` or form/query `admin_token`)
 - `POST /admin/generate` (header: `x-admin-token`)
 - `POST /admin/generate-batch?count=10` (header: `x-admin-token`)
 - `POST /admin/run-payouts` (header: `x-admin-token`)
@@ -131,6 +139,23 @@ If PayPal credentials are missing, payouts are marked `simulated` so you can tes
 Notes:
 - Published Etsy entries are created as **draft listings** for safe review before public launch.
 - This flow uses OAuth; you do not paste Etsy passwords into the app.
+
+## Gumroad integration setup
+
+1. Create a Gumroad API token for your account.
+2. In Render set `GUMROAD_ACCESS_TOKEN`.
+3. Redeploy and open `https://<your-render-domain>/admin?admin_token=<ADMIN_TOKEN>`.
+4. Click **Publish** per product or **Publish All To Gumroad**.
+
+## Shopify integration setup
+
+1. In Shopify Admin, create a custom app and grant product write permissions.
+2. Install the app and copy the Admin API access token.
+3. In Render set:
+   - `SHOPIFY_STORE_DOMAIN` (example: `your-store.myshopify.com`)
+   - `SHOPIFY_ACCESS_TOKEN`
+   - `SHOPIFY_API_VERSION` (default `2024-10`)
+4. Redeploy and publish from `/admin`.
 
 ## Notes
 

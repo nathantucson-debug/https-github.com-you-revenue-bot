@@ -117,10 +117,42 @@
       </section>
 
       <section class="card">
+        <h2>Gumroad Integration</h2>
+        {% if not gumroad_enabled %}
+        <p>Set <code>GUMROAD_ACCESS_TOKEN</code> in Render environment variables to enable Gumroad publishing.</p>
+        {% else %}
+        <div class="actions">
+          <form action="/admin/publish/gumroad-all" method="POST">
+            <input type="hidden" name="admin_token" value="{{ admin_token_hint }}">
+            <input type="hidden" name="redirect" value="1">
+            <button class="btn primary" type="submit">Publish All To Gumroad</button>
+          </form>
+        </div>
+        <p class="status-line">Products are created as Gumroad drafts.</p>
+        {% endif %}
+      </section>
+
+      <section class="card">
+        <h2>Shopify Integration</h2>
+        {% if not shopify_enabled %}
+        <p>Set <code>SHOPIFY_STORE_DOMAIN</code> and <code>SHOPIFY_ACCESS_TOKEN</code> in Render env vars to enable Shopify publishing.</p>
+        {% else %}
+        <div class="actions">
+          <form action="/admin/publish/shopify-all" method="POST">
+            <input type="hidden" name="admin_token" value="{{ admin_token_hint }}">
+            <input type="hidden" name="redirect" value="1">
+            <button class="btn primary" type="submit">Publish All To Shopify</button>
+          </form>
+        </div>
+        <p class="status-line">Products are created as Shopify drafts.</p>
+        {% endif %}
+      </section>
+
+      <section class="card">
         <h2>Active Products <span class="pill">{{ products|length }}</span></h2>
         <table>
           <thead>
-            <tr><th>Title</th><th>Price</th><th>Actions</th><th>Etsy</th><th>Created</th></tr>
+            <tr><th>Title</th><th>Price</th><th>Actions</th><th>Etsy</th><th>Gumroad</th><th>Shopify</th><th>Created</th></tr>
           </thead>
           <tbody>
             {% for p in products %}
@@ -134,6 +166,20 @@
               </td>
               <td>
                 <form action="/admin/publish/etsy/{{ p.id }}" method="POST">
+                  <input type="hidden" name="admin_token" value="{{ admin_token_hint }}">
+                  <input type="hidden" name="redirect" value="1">
+                  <button class="btn" type="submit">Publish</button>
+                </form>
+              </td>
+              <td>
+                <form action="/admin/publish/gumroad/{{ p.id }}" method="POST">
+                  <input type="hidden" name="admin_token" value="{{ admin_token_hint }}">
+                  <input type="hidden" name="redirect" value="1">
+                  <button class="btn" type="submit">Publish</button>
+                </form>
+              </td>
+              <td>
+                <form action="/admin/publish/shopify/{{ p.id }}" method="POST">
                   <input type="hidden" name="admin_token" value="{{ admin_token_hint }}">
                   <input type="hidden" name="redirect" value="1">
                   <button class="btn" type="submit">Publish</button>
@@ -154,6 +200,46 @@
           </thead>
           <tbody>
             {% for l in etsy_listings %}
+            <tr>
+              <td>{{ l.product_id[:8] }}</td>
+              <td>{{ l.external_id }}</td>
+              <td>{{ l.status }}</td>
+              <td>{% if l.external_url %}<a href="{{ l.external_url }}" target="_blank" rel="noopener">Open</a>{% else %}-{% endif %}</td>
+              <td>{{ l.updated_at }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+
+      <section class="card">
+        <h2>Gumroad Listings <span class="pill">{{ gumroad_listings|length }}</span></h2>
+        <table>
+          <thead>
+            <tr><th>Product ID</th><th>Listing ID</th><th>Status</th><th>URL</th><th>Updated</th></tr>
+          </thead>
+          <tbody>
+            {% for l in gumroad_listings %}
+            <tr>
+              <td>{{ l.product_id[:8] }}</td>
+              <td>{{ l.external_id }}</td>
+              <td>{{ l.status }}</td>
+              <td>{% if l.external_url %}<a href="{{ l.external_url }}" target="_blank" rel="noopener">Open</a>{% else %}-{% endif %}</td>
+              <td>{{ l.updated_at }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+
+      <section class="card">
+        <h2>Shopify Listings <span class="pill">{{ shopify_listings|length }}</span></h2>
+        <table>
+          <thead>
+            <tr><th>Product ID</th><th>Listing ID</th><th>Status</th><th>URL</th><th>Updated</th></tr>
+          </thead>
+          <tbody>
+            {% for l in shopify_listings %}
             <tr>
               <td>{{ l.product_id[:8] }}</td>
               <td>{{ l.external_id }}</td>

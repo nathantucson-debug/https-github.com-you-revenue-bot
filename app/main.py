@@ -39,6 +39,11 @@ ETSY_SCOPES = os.getenv("ETSY_SCOPES", "listings_w listings_r shops_r")
 ETSY_API_BASE = os.getenv("ETSY_API_BASE", "https://api.etsy.com/v3/application")
 ETSY_AUTH_BASE = os.getenv("ETSY_AUTH_BASE", "https://www.etsy.com/oauth/connect")
 ETSY_TOKEN_URL = os.getenv("ETSY_TOKEN_URL", "https://api.etsy.com/v3/public/oauth/token")
+GUMROAD_ACCESS_TOKEN = os.getenv("GUMROAD_ACCESS_TOKEN", "")
+GUMROAD_API_BASE = os.getenv("GUMROAD_API_BASE", "https://api.gumroad.com/v2")
+SHOPIFY_STORE_DOMAIN = os.getenv("SHOPIFY_STORE_DOMAIN", "")
+SHOPIFY_ACCESS_TOKEN = os.getenv("SHOPIFY_ACCESS_TOKEN", "")
+SHOPIFY_API_VERSION = os.getenv("SHOPIFY_API_VERSION", "2024-10")
 
 PAYPAL_BASE = "https://api-m.paypal.com" if PAYPAL_ENV == "live" else "https://api-m.sandbox.paypal.com"
 
@@ -935,6 +940,14 @@ def etsy_enabled() -> bool:
     return bool(ETSY_CLIENT_ID and ETSY_REDIRECT_URI)
 
 
+def gumroad_enabled() -> bool:
+    return bool(GUMROAD_ACCESS_TOKEN)
+
+
+def shopify_enabled() -> bool:
+    return bool(SHOPIFY_STORE_DOMAIN and SHOPIFY_ACCESS_TOKEN)
+
+
 def etsy_headers(access_token: str) -> dict[str, str]:
     return {
         "x-api-key": ETSY_CLIENT_ID,
@@ -1218,6 +1231,89 @@ def publish_product_to_etsy(product: dict) -> dict:
         note="Created as Etsy draft listing",
     )
     return {"listing_id": listing_id, "listing_url": listing_url, "status": "draft"}
+
+
+def publish_product_to_gumroad(product: dict) -> dict:
+    if not gumroad_enabled():
+        raise ValueError("gumroad not configured")
+
+    payload = {
+        "access_token": GUMROAD_ACCESS_TOKEN,
+        "name": product["title"],
+        "price": int(product["price_cents"]),
+        "description": f"{product['description']}\n\nIncludes:\n- " + "\n- ".join(product.get("preview_items", [])),
+        "published": False,
+    }
+    req = request.Request(
+        f"{GUMROAD_API_BASE}/products",
+        data=parse.urlencode(payload).encode("utf-8"),
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        method="POST",
+    )
+    with request.urlopen(req, timeout=20) as resp:
+        body = json.loads(resp.read().decode("utf-8"))
+    product_obj = body.get("product") or body.get("resource") or body
+    external_id = str(product_obj.get("id") or "")
+    if not external_id:
+        raise ValueError(f"gumroad create failed: {body}")
+    external_url = str(product_obj.get("short_url") or product_obj.get("url") or "")
+    upsert_channel_listing(
+        provider="gumroad",
+        product_id=product["id"],
+        external_id=external_id,
+        external_url=external_url,
+        status="draft",
+        note="Created as Gumroad draft product",
+    )
+    return {"product_id": external_id, "product_url": external_url, "status": "draft"}
+
+
+def publish_product_to_shopify(product: dict) -> dict:
+    if not shopify_enabled():
+        raise ValueError("shopify not configured")
+
+    domain = SHOPIFY_STORE_DOMAIN.strip().replace("https://", "").replace("http://", "")
+    endpoint = f"https://{domain}/admin/api/{SHOPIFY_API_VERSION}/products.json"
+    payload = {
+        "product": {
+            "title": product["title"],
+            "body_html": "<p>"
+            + product["description"]
+            + "</p><ul>"
+            + "".join(f"<li>{item}</li>" for item in product.get("preview_items", []))
+            + "</ul>",
+            "vendor": "Northstar Studio",
+            "product_type": product.get("category", "Digital Product"),
+            "status": "draft",
+            "variants": [{"price": f"{int(product['price_cents']) / 100:.2f}"}],
+        }
+    }
+    req = request.Request(
+        endpoint,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "X-Shopify-Access-Token": SHOPIFY_ACCESS_TOKEN,
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    with request.urlopen(req, timeout=20) as resp:
+        body = json.loads(resp.read().decode("utf-8"))
+    product_obj = body.get("product") or {}
+    external_id = str(product_obj.get("id") or "")
+    if not external_id:
+        raise ValueError(f"shopify create failed: {body}")
+    handle = product_obj.get("handle") or ""
+    external_url = f"https://{domain}/products/{handle}" if handle else ""
+    upsert_channel_listing(
+        provider="shopify",
+        product_id=product["id"],
+        external_id=external_id,
+        external_url=external_url,
+        status="draft",
+        note="Created as Shopify draft product",
+    )
+    return {"product_id": external_id, "product_url": external_url, "status": "draft"}
 
 
 def create_stripe_checkout_session(
@@ -1594,6 +1690,8 @@ def dashboard():
     deliveries = list_recent_deliveries(limit=20)
     etsy_conn = get_channel_connection("etsy")
     etsy_listings = list_channel_listings("etsy", limit=50)
+    gumroad_listings = list_channel_listings("gumroad", limit=50)
+    shopify_listings = list_channel_listings("shopify", limit=50)
     return render_template(
         "index.html",
         products=products,
@@ -1604,8 +1702,12 @@ def dashboard():
         etsy_account_name=(etsy_conn or {}).get("account_name", ""),
         etsy_shop_id=(etsy_conn or {}).get("account_id", ""),
         etsy_listings=etsy_listings,
+        gumroad_listings=gumroad_listings,
+        shopify_listings=shopify_listings,
         admin_token_hint=(flask_request.args.get("admin_token") or ""),
         etsy_enabled=etsy_enabled(),
+        gumroad_enabled=gumroad_enabled(),
+        shopify_enabled=shopify_enabled(),
     )
 
 
@@ -1820,6 +1922,96 @@ def admin_publish_etsy_all():
     fail_count = len(results) - success_count
     if flask_request.form.get("redirect") == "1":
         return redirect("/admin?etsy=bulk", code=302)
+    return jsonify({"ok": True, "success": success_count, "failed": fail_count, "results": results})
+
+
+@app.post("/admin/publish/gumroad/<product_id>")
+def admin_publish_gumroad(product_id: str):
+    if not admin_guard_any():
+        return jsonify({"error": "unauthorized"}), 401
+
+    product = get_product(product_id)
+    if not product:
+        return jsonify({"error": "product not found"}), 404
+
+    try:
+        listing = publish_product_to_gumroad(product)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="ignore")
+        return jsonify({"error": "gumroad api error", "detail": detail}), 502
+    except URLError as exc:
+        return jsonify({"error": "gumroad network error", "detail": str(exc)}), 502
+
+    if flask_request.form.get("redirect") == "1":
+        return redirect("/admin?gumroad=published", code=302)
+    return jsonify({"ok": True, "product_id": product_id, "listing": listing})
+
+
+@app.post("/admin/publish/gumroad-all")
+def admin_publish_gumroad_all():
+    if not admin_guard_any():
+        return jsonify({"error": "unauthorized"}), 401
+
+    products = list_products(active_only=True)
+    results = []
+    for product in products:
+        try:
+            listing = publish_product_to_gumroad(product)
+            results.append({"product_id": product["id"], "title": product["title"], "ok": True, "listing": listing})
+        except Exception as exc:
+            results.append({"product_id": product["id"], "title": product["title"], "ok": False, "error": str(exc)})
+
+    success_count = len([r for r in results if r["ok"]])
+    fail_count = len(results) - success_count
+    if flask_request.form.get("redirect") == "1":
+        return redirect("/admin?gumroad=bulk", code=302)
+    return jsonify({"ok": True, "success": success_count, "failed": fail_count, "results": results})
+
+
+@app.post("/admin/publish/shopify/<product_id>")
+def admin_publish_shopify(product_id: str):
+    if not admin_guard_any():
+        return jsonify({"error": "unauthorized"}), 401
+
+    product = get_product(product_id)
+    if not product:
+        return jsonify({"error": "product not found"}), 404
+
+    try:
+        listing = publish_product_to_shopify(product)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="ignore")
+        return jsonify({"error": "shopify api error", "detail": detail}), 502
+    except URLError as exc:
+        return jsonify({"error": "shopify network error", "detail": str(exc)}), 502
+
+    if flask_request.form.get("redirect") == "1":
+        return redirect("/admin?shopify=published", code=302)
+    return jsonify({"ok": True, "product_id": product_id, "listing": listing})
+
+
+@app.post("/admin/publish/shopify-all")
+def admin_publish_shopify_all():
+    if not admin_guard_any():
+        return jsonify({"error": "unauthorized"}), 401
+
+    products = list_products(active_only=True)
+    results = []
+    for product in products:
+        try:
+            listing = publish_product_to_shopify(product)
+            results.append({"product_id": product["id"], "title": product["title"], "ok": True, "listing": listing})
+        except Exception as exc:
+            results.append({"product_id": product["id"], "title": product["title"], "ok": False, "error": str(exc)})
+
+    success_count = len([r for r in results if r["ok"]])
+    fail_count = len(results) - success_count
+    if flask_request.form.get("redirect") == "1":
+        return redirect("/admin?shopify=bulk", code=302)
     return jsonify({"ok": True, "success": success_count, "failed": fail_count, "results": results})
 
 
