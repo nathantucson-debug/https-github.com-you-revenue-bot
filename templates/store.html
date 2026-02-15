@@ -36,6 +36,17 @@
       border-radius: 14px;
       padding: 1rem;
     }
+    .tag {
+      display: inline-block;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #0d4ec9;
+      background: #e8f0ff;
+      border: 1px solid #c5d8ff;
+      border-radius: 999px;
+      padding: 0.18rem 0.55rem;
+      margin-bottom: 0.55rem;
+    }
     .price {
       font-size: 1.4rem;
       margin: 0.5rem 0 1rem 0;
@@ -63,11 +74,12 @@
     <div class="grid">
       {% for p in products %}
       <section class="card">
+        <span class="tag">Digital Download</span>
         <h2>{{ p.title }}</h2>
+        <p><strong>{{ p.tagline }}</strong></p>
         <p class="desc">{{ p.description }}</p>
         <p class="price">${{ "%.2f"|format(p.price_cents / 100) }}</p>
         <a class="btn" href="/products/{{ p.id }}">View Product</a>
-        <p class="muted">ID: {{ p.id }}</p>
       </section>
       {% endfor %}
     </div>

@@ -43,58 +43,64 @@ DIGITAL_PRODUCT_BLUEPRINTS = [
 
 PRODUCT_DETAILS = {
     "Notion productivity template pack": {
-        "description": "A ready-to-use Notion setup to organize tasks, weekly planning, and habit tracking.",
+        "description": "A complete Notion operating system for creators and operators who need clean planning, execution, and review workflows.",
+        "tagline": "Plan faster. Execute daily. Review weekly.",
         "preview_items": [
-            "Daily planner and weekly review boards",
-            "Habit tracker and goal dashboard",
-            "Project tracker with status templates",
+            "Daily command center and weekly review board",
+            "Goal tracker with KPI dashboard and status tags",
+            "Project pipeline with priority and deadline views",
         ],
-        "preview_snippet": "Weekly Focus\n- Top 3 Outcomes\n- Must-do Tasks\n- Follow-ups\n\nHabit Tracker\nMon Tue Wed Thu Fri Sat Sun\nRead  [ ] [ ] [ ] [ ] [ ] [ ] [ ]",
+        "preview_snippet": "WEEKLY DASHBOARD\nTop Outcomes:\n1) Launch lead magnet\n2) Publish 3 posts\n3) Close 2 client calls\n\nTODAY VIEW\nMust-do:\n- Draft offer page copy\n- Send 15 outreach DMs\n- Review yesterday metrics",
     },
     "Resume and cover letter kit": {
-        "description": "Professional resume and cover letter templates designed for fast customization.",
+        "description": "Premium resume and cover letter templates designed to help candidates present measurable impact and pass ATS filters.",
+        "tagline": "Stand out in 60 seconds.",
         "preview_items": [
-            "ATS-friendly resume template",
-            "3 customizable cover letter formats",
-            "Keyword optimization checklist",
+            "ATS-optimized resume with impact-first bullets",
+            "3 conversion-focused cover letter frameworks",
+            "Role keyword map and tailoring checklist",
         ],
-        "preview_snippet": "SUMMARY\nResults-driven [Role] with [X] years in [industry].\n\nEXPERIENCE\n[Company] - [Role]\n- Increased [metric] by [percent]\n- Launched [project] with [outcome]",
+        "preview_snippet": "EXECUTIVE SUMMARY\nGrowth marketer with 6+ years scaling B2C funnels.\n\nEXPERIENCE\nAcme Labs - Senior Marketing Manager\n- Increased qualified pipeline by 38% in 2 quarters\n- Reduced CAC by 24% through lifecycle segmentation",
     },
     "Small business invoice template bundle": {
-        "description": "Invoice and payment request templates for freelancers and small businesses.",
+        "description": "Professional invoice pack for freelancers and service businesses that want to look credible and get paid faster.",
+        "tagline": "Professional invoices. Faster payments.",
         "preview_items": [
-            "Simple and branded invoice layouts",
-            "Late fee and payment terms examples",
-            "Recurring invoice template",
+            "Branded invoice layouts (clean, modern, minimal)",
+            "Late fee policy and payment terms templates",
+            "Recurring retainer and milestone billing versions",
         ],
-        "preview_snippet": "INVOICE #1042\nBill To: Client Name\nService: Website Audit\nAmount Due: $350.00\nDue Date: 2026-02-22\nPayment Terms: Net 7",
+        "preview_snippet": "INVOICE #2047\nBill To: Northstar Design Co.\nService: Conversion Audit + Recommendations\nSubtotal: $1,200.00\nDue Date: 2026-02-22\nTerms: Net 7, 1.5% late fee after due date",
     },
     "Meal prep planner bundle": {
-        "description": "Plan weekly meals, shopping lists, and prep schedules in one printable bundle.",
+        "description": "A practical meal planning system that helps busy professionals eat better, reduce food waste, and save time.",
+        "tagline": "Plan once. Eat well all week.",
         "preview_items": [
-            "7-day meal planning sheets",
-            "Auto-fill grocery checklist format",
-            "Batch-cooking prep timeline",
+            "7-day macro-friendly meal planner",
+            "Category-based grocery list template",
+            "90-minute Sunday batch prep workflow",
         ],
-        "preview_snippet": "MONDAY\nBreakfast: Greek yogurt + berries\nLunch: Chicken bowl\nDinner: Salmon + rice\n\nGROCERY\n[ ] chicken breast\n[ ] spinach\n[ ] rice",
+        "preview_snippet": "WEEK PLAN (MONDAY)\nBreakfast: Overnight oats + berries\nLunch: Chicken quinoa bowl\nDinner: Salmon, rice, and greens\n\nPREP CHECKLIST\n[ ] Roast protein trays\n[ ] Portion lunch boxes\n[ ] Prep 3 sauces",
     },
     "Freelancer outreach email pack": {
-        "description": "Cold outreach and follow-up email templates for client acquisition.",
+        "description": "Client acquisition email pack for freelancers and consultants who want replies without sounding spammy.",
+        "tagline": "More replies. Better clients.",
         "preview_items": [
-            "First-touch outreach templates",
-            "Follow-up sequence examples",
-            "Personalization framework",
+            "First-touch cold email templates by niche",
+            "4-step follow-up sequence with timing guide",
+            "Personalization prompts that improve response rates",
         ],
-        "preview_snippet": "Subject: Quick idea for {{company}}\n\nHi {{name}},\nI noticed {{specific_issue}} on {{channel}}.\nI can help improve {{goal}} in 14 days.\nOpen to a 10-min chat this week?",
+        "preview_snippet": "SUBJECT: Quick idea for {{company}}\n\nHi {{first_name}},\nI noticed {{specific_gap}} on your {{channel}}.\nI mapped a 3-step fix that could improve {{metric}} in 14 days.\nOpen to a 10-minute walkthrough this week?",
     },
     "Social media caption template pack": {
-        "description": "Caption ideas and content structures for consistent posting across platforms.",
+        "description": "Ready-to-publish caption templates for creators, coaches, and small brands who want consistent growth content.",
+        "tagline": "Publish faster with better hooks.",
         "preview_items": [
-            "30 call-to-action caption starters",
-            "Short-form and long-form variants",
-            "Engagement prompt templates",
+            "30 CTA-driven caption openers",
+            "Short-form and long-form caption formats",
+            "Engagement prompts for saves, shares, and comments",
         ],
-        "preview_snippet": "Hook: Most creators miss this one growth lever.\nValue: Use a 3-part caption: hook, proof, CTA.\nCTA: Comment 'template' and I will send it.",
+        "preview_snippet": "HOOK: Most creators overcomplicate growth.\nVALUE: Use this framework: pain point -> proof -> practical step.\nCTA: Comment \"guide\" and I will send the full structure.",
     },
 }
 
@@ -116,6 +122,10 @@ def enrich_product(product: dict) -> dict:
     product["preview_snippet"] = details.get(
         "preview_snippet",
         "Sample preview unavailable for this item.",
+    )
+    product["tagline"] = details.get(
+        "tagline",
+        "Digital toolkit designed for practical, measurable results.",
     )
     return product
 
