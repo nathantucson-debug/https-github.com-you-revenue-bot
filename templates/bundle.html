@@ -37,7 +37,7 @@
 <body>
   <header>
     <div class="wrap nav">
-      <div class="brand">Northstar Studio</div>
+      <div class="brand">Northstar Studio <span style="font-weight:600;color:#415b86">bundle value, no fluff</span></div>
       <a class="btn" href="/store">Back To Store</a>
     </div>
   </header>
@@ -64,8 +64,8 @@
       </article>
 
       <aside class="card">
-        <h3>Reserve This Bundle</h3>
-        <p class="small">Save your email for reminder follow-up and return checkout.</p>
+        <h3>Want us to hold this bundle?</h3>
+        <p class="small">Save your email and we’ll send a simple reminder link so you can return whenever you’re ready.</p>
         <form action="/capture-lead/bundle/{{ bundle['key'] }}" method="POST">
           <label for="email">Email address</label>
           <input id="email" name="email" type="email" placeholder="you@example.com" required>

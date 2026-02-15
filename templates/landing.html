@@ -9,6 +9,7 @@
     * { box-sizing: border-box; }
     body { margin:0; font-family:"Avenir Next","Segoe UI",sans-serif; color:var(--ink); background:linear-gradient(180deg,#f8fbff 0%,var(--bg) 100%); }
     .wrap { max-width:1140px; margin:0 auto; padding:0 1rem; }
+    .topline { text-align:center; font-size:.85rem; color:#1f355c; background:#eaf2ff; border-bottom:1px solid #d6e4ff; padding:.42rem .6rem; }
     header { position:sticky; top:0; z-index:20; backdrop-filter:blur(8px); background:rgba(248,251,255,.9); border-bottom:1px solid rgba(219,227,240,.8); }
     .nav { display:flex; justify-content:space-between; align-items:center; padding:1rem 0; }
     .brand { font-weight:800; }
@@ -52,9 +53,10 @@
   </style>
 </head>
 <body>
+  <div class="topline">7-day satisfaction guarantee, clear previews before purchase, and support-first service.</div>
   <header>
     <div class="wrap nav">
-      <div class="brand">Northstar Studio</div>
+      <div class="brand">Northstar Studio <span style="font-weight:600;color:#415b86">for builders with full lives</span></div>
       <a class="btn" href="/store">Shop Catalog</a>
     </div>
   </header>
@@ -62,8 +64,8 @@
   <main class="wrap">
     <section class="hero">
       <div class="hero-box">
-        <h1>Digital products that look premium and perform in the real world.</h1>
-        <p class="lead">Purpose-built templates and toolkits for creators, freelancers, and operators. Every product is structured for fast implementation, clear deliverables, and immediate business use.</p>
+        <h1>Digital products that make your workday easier and your results stronger.</h1>
+        <p class="lead">Everything here is built to save time, reduce guesswork, and help you move forward with confidence. You get practical assets, clear previews, fair pricing, and support-minded policies.</p>
         <div class="row">
           <a class="btn primary" href="/store">Shop Best Sellers</a>
           <a class="btn" href="/store">Browse All Products</a>
@@ -73,7 +75,7 @@
 
     <section class="section">
       <h2>Featured Products</h2>
-      <p class="note">High-intent categories chosen from active online demand themes.</p>
+      <p class="note">Choose from practical systems designed to deliver visible value in real business and everyday workflows.</p>
       <div class="grid">
         {% for p in products %}
         <article class="card">
@@ -137,13 +139,13 @@
 
     <section class="cta">
       <div>
-        <h2 style="margin:0 0 .2rem 0;">Ready to upgrade your workflow?</h2>
-        <p>Start with one product or save with a curated bundle.</p>
+        <h2 style="margin:0 0 .2rem 0;">Ready for a simple, fair, high-value upgrade?</h2>
+        <p>Start with one product now or choose a bundle for the best value per dollar.</p>
       </div>
       <a class="btn primary" href="/store">Shop Now</a>
     </section>
   </main>
 
-  <footer>Northstar Studio. Premium digital products for modern online businesses.</footer>
+  <footer>Northstar Studio. Built to help you feel supported, confident, and ahead.</footer>
 </body>
 </html>

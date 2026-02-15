@@ -45,7 +45,7 @@
 <body>
   <header>
     <div class="wrap nav">
-      <div class="brand">Northstar Studio</div>
+      <div class="brand">Northstar Studio <span style="font-weight:600;color:#415b86">crafted for real momentum</span></div>
       <a class="btn" href="/store">Back To Store</a>
     </div>
   </header>
@@ -71,8 +71,8 @@
       </article>
 
       <aside class="card">
-        <h3>Reserve This Offer</h3>
-        <p class="small">Save your email for reminder follow-up and fast return checkout.</p>
+        <h3>Want us to hold this for you?</h3>
+        <p class="small">Drop your email and we’ll send a friendly reminder so you can come back without losing your place.</p>
         <form action="/capture-lead/product/{{ product.id }}" method="POST">
           <label for="email">Email address</label>
           <input id="email" name="email" type="email" placeholder="you@example.com" required>
@@ -87,7 +87,7 @@
           <label class="inline"><input type="checkbox" name="add_bump" value="1"> Add {{ order_bump.name }} (+${{ "%.2f"|format(order_bump.price_cents / 100) }})</label>
           <button class="btn primary" type="submit">Buy Now</button>
         </form>
-        <div class="trust">7-day satisfaction guarantee. If deliverables do not match listing details, request a full refund within 7 days.</div>
+        <div class="trust">7-day satisfaction guarantee. If this doesn’t match the listed value, we make it right fast.</div>
       </aside>
     </section>
   </main>
