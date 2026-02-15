@@ -348,6 +348,19 @@ def dashboard():
     return render_template("index.html", products=products, payouts=payouts)
 
 
+@app.get("/store")
+def store():
+    return render_template("store.html", products=list_products())
+
+
+@app.get("/products/<product_id>")
+def product_detail(product_id: str):
+    product = get_product(product_id)
+    if not product:
+        return jsonify({"error": "product not found"}), 404
+    return render_template("product.html", product=product)
+
+
 @app.get("/health")
 def health():
     return jsonify({"ok": True, "time": utc_now_iso()})
