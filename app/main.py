@@ -32,6 +32,13 @@ SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER = os.getenv("SMTP_USER", "")
 SMTP_PASS = os.getenv("SMTP_PASS", "")
 SMTP_FROM = os.getenv("SMTP_FROM", "")
+ETSY_CLIENT_ID = os.getenv("ETSY_CLIENT_ID", "")
+ETSY_CLIENT_SECRET = os.getenv("ETSY_CLIENT_SECRET", "")
+ETSY_REDIRECT_URI = os.getenv("ETSY_REDIRECT_URI", "")
+ETSY_SCOPES = os.getenv("ETSY_SCOPES", "listings_w listings_r shops_r")
+ETSY_API_BASE = os.getenv("ETSY_API_BASE", "https://api.etsy.com/v3/application")
+ETSY_AUTH_BASE = os.getenv("ETSY_AUTH_BASE", "https://www.etsy.com/oauth/connect")
+ETSY_TOKEN_URL = os.getenv("ETSY_TOKEN_URL", "https://api.etsy.com/v3/public/oauth/token")
 
 PAYPAL_BASE = "https://api-m.paypal.com" if PAYPAL_ENV == "live" else "https://api-m.sandbox.paypal.com"
 
@@ -619,6 +626,45 @@ def init_db() -> None:
         )
         """
     )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS oauth_states (
+            state TEXT PRIMARY KEY,
+            provider TEXT NOT NULL,
+            verifier TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        )
+        """
+    )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS channel_connections (
+            provider TEXT PRIMARY KEY,
+            access_token TEXT NOT NULL,
+            refresh_token TEXT NOT NULL,
+            expires_at TEXT NOT NULL,
+            account_id TEXT,
+            account_name TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+        """
+    )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS channel_listings (
+            id TEXT PRIMARY KEY,
+            provider TEXT NOT NULL,
+            product_id TEXT NOT NULL,
+            external_id TEXT NOT NULL,
+            external_url TEXT,
+            status TEXT NOT NULL,
+            note TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+        """
+    )
     conn.commit()
     conn.close()
 
@@ -858,6 +904,320 @@ def public_base_url() -> str:
     if configured:
         return configured.rstrip("/")
     return flask_request.url_root.rstrip("/")
+
+
+def admin_token_value() -> str:
+    return (
+        flask_request.headers.get("x-admin-token")
+        or flask_request.args.get("admin_token")
+        or flask_request.form.get("admin_token")
+        or ""
+    )
+
+
+def admin_guard_any() -> bool:
+    return admin_token_value() == ADMIN_TOKEN
+
+
+def b64url(data: bytes) -> str:
+    return base64.urlsafe_b64encode(data).decode("utf-8").rstrip("=")
+
+
+def utc_iso_from_epoch(epoch_seconds: int) -> str:
+    return datetime.fromtimestamp(epoch_seconds, tz=timezone.utc).isoformat()
+
+
+def epoch_from_iso(iso_text: str) -> int:
+    return int(datetime.fromisoformat(iso_text).timestamp())
+
+
+def etsy_enabled() -> bool:
+    return bool(ETSY_CLIENT_ID and ETSY_REDIRECT_URI)
+
+
+def etsy_headers(access_token: str) -> dict[str, str]:
+    return {
+        "x-api-key": ETSY_CLIENT_ID,
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json",
+    }
+
+
+def save_oauth_state(provider: str, state: str, verifier: str) -> None:
+    conn = db()
+    conn.execute(
+        "INSERT INTO oauth_states (state, provider, verifier, created_at) VALUES (?, ?, ?, ?)",
+        (state, provider, verifier, utc_now_iso()),
+    )
+    conn.commit()
+    conn.close()
+
+
+def consume_oauth_state(provider: str, state: str) -> str | None:
+    conn = db()
+    row = conn.execute(
+        "SELECT verifier FROM oauth_states WHERE state = ? AND provider = ?",
+        (state, provider),
+    ).fetchone()
+    conn.execute("DELETE FROM oauth_states WHERE state = ? AND provider = ?", (state, provider))
+    conn.commit()
+    conn.close()
+    return row["verifier"] if row else None
+
+
+def save_channel_connection(
+    *,
+    provider: str,
+    access_token: str,
+    refresh_token: str,
+    expires_at: str,
+    account_id: str = "",
+    account_name: str = "",
+) -> None:
+    conn = db()
+    now = utc_now_iso()
+    conn.execute(
+        """
+        INSERT INTO channel_connections (provider, access_token, refresh_token, expires_at, account_id, account_name, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(provider) DO UPDATE SET
+            access_token = excluded.access_token,
+            refresh_token = excluded.refresh_token,
+            expires_at = excluded.expires_at,
+            account_id = excluded.account_id,
+            account_name = excluded.account_name,
+            updated_at = excluded.updated_at
+        """,
+        (provider, access_token, refresh_token, expires_at, account_id, account_name, now, now),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_channel_connection(provider: str) -> dict | None:
+    conn = db()
+    row = conn.execute(
+        "SELECT provider, access_token, refresh_token, expires_at, account_id, account_name, created_at, updated_at FROM channel_connections WHERE provider = ?",
+        (provider,),
+    ).fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def list_channel_listings(provider: str, limit: int = 100) -> list[dict]:
+    conn = db()
+    rows = conn.execute(
+        "SELECT id, provider, product_id, external_id, external_url, status, note, created_at, updated_at FROM channel_listings WHERE provider = ? ORDER BY updated_at DESC LIMIT ?",
+        (provider, limit),
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def upsert_channel_listing(
+    *,
+    provider: str,
+    product_id: str,
+    external_id: str,
+    external_url: str,
+    status: str,
+    note: str,
+) -> None:
+    conn = db()
+    now = utc_now_iso()
+    existing = conn.execute(
+        "SELECT id FROM channel_listings WHERE provider = ? AND product_id = ?",
+        (provider, product_id),
+    ).fetchone()
+    if existing:
+        conn.execute(
+            """
+            UPDATE channel_listings
+            SET external_id = ?, external_url = ?, status = ?, note = ?, updated_at = ?
+            WHERE id = ?
+            """,
+            (external_id, external_url, status, note, now, existing["id"]),
+        )
+    else:
+        conn.execute(
+            """
+            INSERT INTO channel_listings (id, provider, product_id, external_id, external_url, status, note, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (str(uuid.uuid4()), provider, product_id, external_id, external_url, status, note, now, now),
+        )
+    conn.commit()
+    conn.close()
+
+
+def etsy_token_request(payload: dict) -> dict:
+    req = request.Request(
+        ETSY_TOKEN_URL,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    with request.urlopen(req, timeout=20) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
+def etsy_auth_url(state: str, code_challenge: str) -> str:
+    params = {
+        "response_type": "code",
+        "redirect_uri": ETSY_REDIRECT_URI,
+        "scope": ETSY_SCOPES,
+        "client_id": ETSY_CLIENT_ID,
+        "state": state,
+        "code_challenge": code_challenge,
+        "code_challenge_method": "S256",
+    }
+    return f"{ETSY_AUTH_BASE}?{parse.urlencode(params)}"
+
+
+def etsy_exchange_code(code: str, verifier: str) -> dict:
+    payload = {
+        "grant_type": "authorization_code",
+        "client_id": ETSY_CLIENT_ID,
+        "redirect_uri": ETSY_REDIRECT_URI,
+        "code": code,
+        "code_verifier": verifier,
+    }
+    if ETSY_CLIENT_SECRET:
+        payload["client_secret"] = ETSY_CLIENT_SECRET
+    return etsy_token_request(payload)
+
+
+def etsy_refresh_access_token(refresh_token: str) -> dict:
+    payload = {
+        "grant_type": "refresh_token",
+        "client_id": ETSY_CLIENT_ID,
+        "refresh_token": refresh_token,
+    }
+    if ETSY_CLIENT_SECRET:
+        payload["client_secret"] = ETSY_CLIENT_SECRET
+    return etsy_token_request(payload)
+
+
+def etsy_get_json(path: str, access_token: str) -> dict:
+    req = request.Request(
+        f"{ETSY_API_BASE}{path}",
+        headers=etsy_headers(access_token),
+        method="GET",
+    )
+    with request.urlopen(req, timeout=20) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
+def etsy_post_json(path: str, access_token: str, payload: dict) -> dict:
+    req = request.Request(
+        f"{ETSY_API_BASE}{path}",
+        data=json.dumps(payload).encode("utf-8"),
+        headers=etsy_headers(access_token),
+        method="POST",
+    )
+    with request.urlopen(req, timeout=20) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
+def etsy_detect_shop(access_token: str) -> tuple[str, str]:
+    user = etsy_get_json("/users/me", access_token)
+    user_id = str(user.get("user_id") or user.get("userId") or "")
+    if user_id:
+        shops = etsy_get_json(f"/users/{user_id}/shops", access_token)
+        results = shops.get("results") or []
+        if results:
+            shop = results[0]
+            return str(shop.get("shop_id") or shop.get("shopId") or ""), str(shop.get("shop_name") or shop.get("shopName") or "")
+
+    shops = etsy_get_json("/shops?limit=1", access_token)
+    results = shops.get("results") or []
+    if results:
+        shop = results[0]
+        return str(shop.get("shop_id") or shop.get("shopId") or ""), str(shop.get("shop_name") or shop.get("shopName") or "")
+    return "", ""
+
+
+def get_valid_etsy_connection() -> dict:
+    conn_data = get_channel_connection("etsy")
+    if not conn_data:
+        raise ValueError("etsy not connected")
+
+    expires_at = conn_data.get("expires_at", "")
+    refresh_token = conn_data.get("refresh_token", "")
+    now_epoch = int(datetime.now(timezone.utc).timestamp())
+    refresh_needed = True
+    if expires_at:
+        try:
+            refresh_needed = epoch_from_iso(expires_at) <= (now_epoch + 120)
+        except Exception:
+            refresh_needed = True
+
+    if refresh_needed:
+        refreshed = etsy_refresh_access_token(refresh_token)
+        expires_in = int(refreshed.get("expires_in") or 3600)
+        expires_iso = utc_iso_from_epoch(now_epoch + expires_in)
+        access_token = refreshed.get("access_token", conn_data["access_token"])
+        new_refresh = refreshed.get("refresh_token", refresh_token)
+        account_id = conn_data.get("account_id", "")
+        account_name = conn_data.get("account_name", "")
+        save_channel_connection(
+            provider="etsy",
+            access_token=access_token,
+            refresh_token=new_refresh,
+            expires_at=expires_iso,
+            account_id=account_id,
+            account_name=account_name,
+        )
+        conn_data = get_channel_connection("etsy") or conn_data
+    return conn_data
+
+
+def etsy_listing_payload(product: dict) -> dict:
+    tags = [t.lower().replace(" ", "")[:20] for t in product.get("category", "digital").split("/") if t]
+    title_words = [w for w in product["title"].split(" ") if w]
+    for word in title_words[:10]:
+        tag = "".join(c for c in word.lower() if c.isalnum())[:20]
+        if tag and tag not in tags:
+            tags.append(tag)
+        if len(tags) >= 13:
+            break
+    return {
+        "title": product["title"][:140],
+        "description": f"{product['description']}\n\nIncludes:\n- " + "\n- ".join(product.get("preview_items", [])),
+        "price": round(int(product["price_cents"]) / 100, 2),
+        "quantity": 999,
+        "who_made": "i_did",
+        "when_made": "made_to_order",
+        "is_supply": False,
+        "state": "draft",
+        "type": "download",
+        "tags": tags[:13],
+    }
+
+
+def publish_product_to_etsy(product: dict) -> dict:
+    conn_data = get_valid_etsy_connection()
+    shop_id = conn_data.get("account_id", "")
+    access_token = conn_data.get("access_token", "")
+    if not shop_id:
+        raise ValueError("etsy shop not found; reconnect Etsy")
+
+    payload = etsy_listing_payload(product)
+    response = etsy_post_json(f"/shops/{shop_id}/listings", access_token, payload)
+    listing_id = str(response.get("listing_id") or response.get("listingId") or "")
+    if not listing_id:
+        raise ValueError(f"etsy listing create failed: {response}")
+
+    listing_url = f"https://www.etsy.com/listing/{listing_id}"
+    upsert_channel_listing(
+        provider="etsy",
+        product_id=product["id"],
+        external_id=listing_id,
+        external_url=listing_url,
+        status="draft",
+        note="Created as Etsy draft listing",
+    )
+    return {"listing_id": listing_id, "listing_url": listing_url, "status": "draft"}
 
 
 def create_stripe_checkout_session(
@@ -1232,7 +1592,21 @@ def dashboard():
     payouts = [dict(r) for r in payout_rows]
     leads = list_recent_abandoned_leads(limit=20)
     deliveries = list_recent_deliveries(limit=20)
-    return render_template("index.html", products=products, payouts=payouts, leads=leads, deliveries=deliveries)
+    etsy_conn = get_channel_connection("etsy")
+    etsy_listings = list_channel_listings("etsy", limit=50)
+    return render_template(
+        "index.html",
+        products=products,
+        payouts=payouts,
+        leads=leads,
+        deliveries=deliveries,
+        etsy_connected=bool(etsy_conn),
+        etsy_account_name=(etsy_conn or {}).get("account_name", ""),
+        etsy_shop_id=(etsy_conn or {}).get("account_id", ""),
+        etsy_listings=etsy_listings,
+        admin_token_hint=(flask_request.args.get("admin_token") or ""),
+        etsy_enabled=etsy_enabled(),
+    )
 
 
 @app.get("/health")
@@ -1346,6 +1720,107 @@ def admin_run_payouts():
 
     result = process_pending_payouts(limit=25)
     return jsonify(result)
+
+
+@app.get("/connect/etsy")
+def connect_etsy():
+    if not admin_guard_any():
+        return jsonify({"error": "unauthorized"}), 401
+    if not etsy_enabled():
+        return jsonify({"error": "etsy not configured", "needed": ["ETSY_CLIENT_ID", "ETSY_REDIRECT_URI"]}), 503
+
+    verifier = b64url(os.urandom(32))
+    challenge = b64url(hashlib.sha256(verifier.encode("utf-8")).digest())
+    state = str(uuid.uuid4())
+    save_oauth_state("etsy", state, verifier)
+    return redirect(etsy_auth_url(state=state, code_challenge=challenge), code=302)
+
+
+@app.get("/connect/etsy/callback")
+def connect_etsy_callback():
+    state = (flask_request.args.get("state") or "").strip()
+    code = (flask_request.args.get("code") or "").strip()
+    error = (flask_request.args.get("error") or "").strip()
+    if error:
+        return jsonify({"error": "etsy oauth failed", "detail": error}), 400
+    if not state or not code:
+        return jsonify({"error": "missing oauth code/state"}), 400
+
+    verifier = consume_oauth_state("etsy", state)
+    if not verifier:
+        return jsonify({"error": "invalid oauth state"}), 400
+
+    try:
+        token_data = etsy_exchange_code(code=code, verifier=verifier)
+        access_token = token_data.get("access_token", "")
+        refresh_token = token_data.get("refresh_token", "")
+        expires_in = int(token_data.get("expires_in") or 3600)
+        expires_at = utc_iso_from_epoch(int(datetime.now(timezone.utc).timestamp()) + expires_in)
+        if not access_token or not refresh_token:
+            return jsonify({"error": "etsy token exchange failed", "detail": token_data}), 502
+        shop_id, shop_name = etsy_detect_shop(access_token)
+        save_channel_connection(
+            provider="etsy",
+            access_token=access_token,
+            refresh_token=refresh_token,
+            expires_at=expires_at,
+            account_id=shop_id,
+            account_name=shop_name,
+        )
+    except HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="ignore")
+        return jsonify({"error": "etsy api error", "detail": detail}), 502
+    except URLError as exc:
+        return jsonify({"error": "etsy network error", "detail": str(exc)}), 502
+    except Exception as exc:
+        return jsonify({"error": "etsy connect failed", "detail": str(exc)}), 500
+
+    return redirect("/admin?etsy=connected", code=302)
+
+
+@app.post("/admin/publish/etsy/<product_id>")
+def admin_publish_etsy(product_id: str):
+    if not admin_guard_any():
+        return jsonify({"error": "unauthorized"}), 401
+
+    product = get_product(product_id)
+    if not product:
+        return jsonify({"error": "product not found"}), 404
+
+    try:
+        listing = publish_product_to_etsy(product)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    except HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="ignore")
+        return jsonify({"error": "etsy api error", "detail": detail}), 502
+    except URLError as exc:
+        return jsonify({"error": "etsy network error", "detail": str(exc)}), 502
+
+    if flask_request.form.get("redirect") == "1":
+        return redirect("/admin?etsy=published", code=302)
+    return jsonify({"ok": True, "product_id": product_id, "listing": listing})
+
+
+@app.post("/admin/publish/etsy-all")
+def admin_publish_etsy_all():
+    if not admin_guard_any():
+        return jsonify({"error": "unauthorized"}), 401
+
+    products = list_products(active_only=True)
+    results = []
+    for product in products:
+        try:
+            listing = publish_product_to_etsy(product)
+            results.append({"product_id": product["id"], "title": product["title"], "ok": True, "listing": listing})
+        except Exception as exc:
+            results.append({"product_id": product["id"], "title": product["title"], "ok": False, "error": str(exc)})
+
+    success_count = len([r for r in results if r["ok"]])
+    fail_count = len(results) - success_count
+    if flask_request.form.get("redirect") == "1":
+        return redirect("/admin?etsy=bulk", code=302)
+    return jsonify({"ok": True, "success": success_count, "failed": fail_count, "results": results})
 
 
 @app.get("/admin/leads")

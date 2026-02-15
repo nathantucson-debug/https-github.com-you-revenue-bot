@@ -10,6 +10,7 @@ This app provides a production-style digital storefront pipeline:
 - Stripe checkout + webhook sale confirmation
 - post-purchase delivery emails (SMTP or simulated mode)
 - payout queue processing to Venmo via PayPal Payouts
+- Etsy OAuth connection + draft listing publishing from admin
 
 ## Stack
 
@@ -45,7 +46,8 @@ Open: `http://localhost:8080`
 3. Select your GitHub repo; Render will detect `render.yaml` and deploy.
 4. Set required secrets in Render: `APP_PUBLIC_URL`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYOUT_SENDER_EMAIL`.
 5. (Optional) set SMTP vars for automated delivery emails: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`.
-5. Open your Render service URL once deployment finishes.
+6. (Optional) set Etsy vars for marketplace publishing: `ETSY_CLIENT_ID`, `ETSY_CLIENT_SECRET`, `ETSY_REDIRECT_URI`, `ETSY_SCOPES`.
+7. Open your Render service URL once deployment finishes.
 
 Notes:
 - This uses `DATABASE_PATH=/tmp/revenue_bot.db` on Render free tier (ephemeral storage).
@@ -64,6 +66,10 @@ Notes:
 - `POST /capture-lead/product/<product_id>`
 - `POST /capture-lead/bundle/<bundle_key>`
 - `GET /admin` dashboard
+- `GET /connect/etsy` (requires admin token; starts OAuth)
+- `GET /connect/etsy/callback` (OAuth callback)
+- `POST /admin/publish/etsy/<product_id>` (header `x-admin-token` or form/query `admin_token`)
+- `POST /admin/publish/etsy-all` (header `x-admin-token` or form/query `admin_token`)
 - `POST /admin/generate` (header: `x-admin-token`)
 - `POST /admin/generate-batch?count=10` (header: `x-admin-token`)
 - `POST /admin/run-payouts` (header: `x-admin-token`)
@@ -106,6 +112,25 @@ You must configure:
 - `PAYOUT_SENDER_EMAIL`
 
 If PayPal credentials are missing, payouts are marked `simulated` so you can test end-to-end behavior safely.
+
+## Etsy integration setup
+
+1. Create an Etsy app in the Etsy developer portal.
+2. Add OAuth redirect URI: `https://<your-render-domain>/connect/etsy/callback`.
+3. In Render, set:
+   - `ETSY_CLIENT_ID`
+   - `ETSY_CLIENT_SECRET` (if your Etsy app uses it)
+   - `ETSY_REDIRECT_URI` (exactly the callback URL above)
+   - `ETSY_SCOPES` (default: `listings_w listings_r shops_r`)
+4. Redeploy.
+5. Open admin with token in URL for button-based actions:
+   - `https://<your-render-domain>/admin?admin_token=<ADMIN_TOKEN>`
+6. Click **Connect Etsy** and complete Etsy login/consent.
+7. Click **Publish** per product or **Publish All Active Products**.
+
+Notes:
+- Published Etsy entries are created as **draft listings** for safe review before public launch.
+- This flow uses OAuth; you do not paste Etsy passwords into the app.
 
 ## Notes
 

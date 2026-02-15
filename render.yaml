@@ -44,3 +44,11 @@ services:
         sync: false
       - key: SMTP_FROM
         sync: false
+      - key: ETSY_CLIENT_ID
+        sync: false
+      - key: ETSY_CLIENT_SECRET
+        sync: false
+      - key: ETSY_REDIRECT_URI
+        sync: false
+      - key: ETSY_SCOPES
+        value: listings_w listings_r shops_r

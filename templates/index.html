@@ -57,6 +57,24 @@
       background: #eaf1ff;
       color: var(--accent);
     }
+    .btn {
+      display: inline-block;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 0.45rem 0.7rem;
+      color: var(--text);
+      text-decoration: none;
+      background: #fff;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn.primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.8rem; }
+    .status-line { margin-top: 0.6rem; font-size: 0.9rem; color: var(--muted); }
     @media (max-width: 640px) {
       th, td { font-size: 0.85rem; }
     }
@@ -71,10 +89,38 @@
     </p>
     <div class="grid">
       <section class="card">
+        <h2>Etsy Integration</h2>
+        {% if not etsy_enabled %}
+        <p>Set <code>ETSY_CLIENT_ID</code> and <code>ETSY_REDIRECT_URI</code> in Render environment variables to enable connection.</p>
+        {% else %}
+        {% if not admin_token_hint %}
+        <p>Tip: open this page as <code>/admin?admin_token=YOUR_ADMIN_TOKEN</code> to enable one-click connect/publish actions.</p>
+        {% endif %}
+        <p>
+          Connection:
+          {% if etsy_connected %}
+          <span class="pill">Connected{% if etsy_account_name %}: {{ etsy_account_name }}{% endif %}{% if etsy_shop_id %} (shop {{ etsy_shop_id }}){% endif %}</span>
+          {% else %}
+          <span class="pill">Not connected</span>
+          {% endif %}
+        </p>
+        <div class="actions">
+          <a class="btn primary" href="/connect/etsy?admin_token={{ admin_token_hint|urlencode }}">Connect Etsy</a>
+          <form action="/admin/publish/etsy-all" method="POST">
+            <input type="hidden" name="admin_token" value="{{ admin_token_hint }}">
+            <input type="hidden" name="redirect" value="1">
+            <button class="btn" type="submit">Publish All Active Products</button>
+          </form>
+        </div>
+        <p class="status-line">Published listings are created as Etsy drafts so you can review before going live.</p>
+        {% endif %}
+      </section>
+
+      <section class="card">
         <h2>Active Products <span class="pill">{{ products|length }}</span></h2>
         <table>
           <thead>
-            <tr><th>Title</th><th>Price</th><th>Actions</th><th>Created</th></tr>
+            <tr><th>Title</th><th>Price</th><th>Actions</th><th>Etsy</th><th>Created</th></tr>
           </thead>
           <tbody>
             {% for p in products %}
@@ -86,7 +132,34 @@
                 |
                 <a href="{{ p.checkout_url }}" target="_blank" rel="noopener">Buy</a>
               </td>
+              <td>
+                <form action="/admin/publish/etsy/{{ p.id }}" method="POST">
+                  <input type="hidden" name="admin_token" value="{{ admin_token_hint }}">
+                  <input type="hidden" name="redirect" value="1">
+                  <button class="btn" type="submit">Publish</button>
+                </form>
+              </td>
               <td>{{ p.created_at }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+
+      <section class="card">
+        <h2>Etsy Listings <span class="pill">{{ etsy_listings|length }}</span></h2>
+        <table>
+          <thead>
+            <tr><th>Product ID</th><th>Listing ID</th><th>Status</th><th>URL</th><th>Updated</th></tr>
+          </thead>
+          <tbody>
+            {% for l in etsy_listings %}
+            <tr>
+              <td>{{ l.product_id[:8] }}</td>
+              <td>{{ l.external_id }}</td>
+              <td>{{ l.status }}</td>
+              <td>{% if l.external_url %}<a href="{{ l.external_url }}" target="_blank" rel="noopener">Open</a>{% else %}-{% endif %}</td>
+              <td>{{ l.updated_at }}</td>
             </tr>
             {% endfor %}
           </tbody>
