@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ order_bump.name }} | Northstar Studio</title>
   <style>
-    :root { --ink:#111827; --muted:#4b5563; --line:#dbe3f0; --bg:#f4f7fc; --brand:#0b5bd3; }
+    :root { --ink:#111827; --muted:#4b5563; --line:#dbe3f0; --bg:#f4f7fc; --brand:#0b5bd3; --deep:#0f172a; }
     * { box-sizing:border-box; }
     body { margin:0; font-family:"Avenir Next","Segoe UI",sans-serif; color:var(--ink); background:linear-gradient(180deg,#f8fbff 0%,var(--bg) 100%); }
     .wrap { max-width:980px; margin:0 auto; padding:0 1rem; }
@@ -16,12 +16,17 @@
     .btn.primary { background:var(--brand); color:#fff; border-color:var(--brand); }
     main { padding:1.5rem 0 2rem; }
     .hero { background:#fff; border:1px solid var(--line); border-radius:14px; padding:1rem; }
+    .pill { display:inline-block; font-size:.75rem; font-weight:700; border-radius:999px; padding:.22rem .55rem; background:#eaf2ff; border:1px solid #d6e4ff; color:#1e4d9a; margin-bottom:.45rem; }
     h1 { margin:.2rem 0 .5rem; font-size:2rem; }
     p { color:var(--muted); line-height:1.6; }
     .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:.8rem; margin-top:1rem; }
     .card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:.9rem; }
-    .video { margin-top:1rem; border:1px solid var(--line); border-radius:12px; background:#0f172a; color:#dbe7ff; padding:1rem; }
+    .video { margin-top:1rem; border:1px solid #1f2a44; border-radius:14px; background:linear-gradient(135deg,#0b1328,#162447); color:#dbe7ff; padding:1rem; }
     .video h3 { margin:0 0 .5rem 0; color:#fff; }
+    .mock { margin-top:.7rem; border:1px solid rgba(255,255,255,.18); border-radius:12px; padding:1rem; background:rgba(255,255,255,.06); }
+    .play { width:58px; height:58px; border-radius:50%; background:#fff; display:grid; place-items:center; color:#0b5bd3; font-weight:800; margin-bottom:.55rem; }
+    .list { margin:.3rem 0 0; padding-left:1.1rem; color:#dbe7ff; }
+    .list li { margin:.35rem 0; }
   </style>
 </head>
 <body>
@@ -34,30 +39,39 @@
 
   <main class="wrap">
     <section class="hero">
+      <span class="pill">Order Bump Add-On</span>
       <h1>{{ order_bump.name }}</h1>
-      <p>This companion is designed to help buyers implement their template purchase faster with less friction. It includes a guided walkthrough and deployment checklist.</p>
+      <p>A concise training designed to turn your template purchase into immediate results. You’ll see exactly how to set up, customize, and apply each asset in real workflows.</p>
       <a class="btn primary" href="/store">View Core Products</a>
     </section>
 
     <section class="grid">
       <article class="card">
-        <h3>Module 1: Setup</h3>
-        <p>How to install and customize your template in under 20 minutes.</p>
+        <h3>Module 1: Fast Setup</h3>
+        <p>Configure your templates in minutes with a guided setup flow and no guesswork.</p>
       </article>
       <article class="card">
-        <h3>Module 2: Implementation</h3>
-        <p>How to apply the framework to real workflows and avoid common mistakes.</p>
+        <h3>Module 2: Real-World Use</h3>
+        <p>Apply each template in practical business scenarios and avoid the common implementation mistakes.</p>
       </article>
       <article class="card">
         <h3>Module 3: Optimization</h3>
-        <p>How to iterate your system for better output, speed, and consistency.</p>
+        <p>Upgrade your system for better consistency, stronger output quality, and less rework.</p>
       </article>
     </section>
 
     <section class="video">
-      <h3>Video Access</h3>
-      <p>This page is the access hub for the companion. Replace this block with your hosted video URL when ready.</p>
-      <p>Recommended: Vimeo or Loom private share link + transcript download.</p>
+      <h3>What You Get In The Companion</h3>
+      <div class="mock">
+        <div class="play">▶</div>
+        <p style="margin:0;color:#ffffff;font-weight:700;">Template Quickstart Walkthrough</p>
+        <p style="margin:.35rem 0 0;color:#c8d7ff;">A short, high-impact training that helps you start with confidence on day one.</p>
+        <ul class="list">
+          <li>Implementation checklist and sequence</li>
+          <li>Best-practice examples from real use cases</li>
+          <li>Optimization notes to increase results faster</li>
+        </ul>
+      </div>
     </section>
   </main>
 </body>
