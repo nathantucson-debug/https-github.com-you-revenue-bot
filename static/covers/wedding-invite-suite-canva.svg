@@ -1,18 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-label="Wedding Invite Suite (Canva)">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#db2777"/>
-      <stop offset="100%" stop-color="#f43f5e"/>
+      <stop offset="0%" stop-color="#fce7f3"/>
+      <stop offset="100%" stop-color="#fbcfe8"/>
     </linearGradient>
   </defs>
   <rect width="1200" height="720" fill="url(#bg)"/>
-  <rect x="54" y="54" width="1092" height="612" rx="26" fill="rgba(255,255,255,0.10)"/>
-  <rect x="90" y="98" width="220" height="38" rx="19" fill="rgba(255,255,255,0.18)"/>
-  <text x="112" y="124" fill="white" font-size="18" font-family="Avenir Next,Segoe UI,sans-serif" font-weight="700">Northstar Studio</text>
-  <text x="90" y="235" fill="white" font-size="62" font-family="Avenir Next,Segoe UI,sans-serif" font-weight="800">Wedding Invite Suite (Canva)</text>
-  <text x="90" y="290" fill="white" font-size="28" font-family="Avenir Next,Segoe UI,sans-serif" opacity="0.94">Elegant event stationery</text>
-  <line x1="90" y1="335" x2="1110" y2="335" stroke="rgba(255,255,255,0.35)"/>
-  <rect x="90" y="380" width="500" height="14" rx="7" fill="rgba(255,255,255,0.42)"/>
-  <rect x="90" y="412" width="420" height="14" rx="7" fill="rgba(255,255,255,0.30)"/>
-  <rect x="90" y="444" width="460" height="14" rx="7" fill="rgba(255,255,255,0.25)"/>
+  <rect x="70" y="58" width="1060" height="604" rx="24" fill="#ffffff" stroke="#d8e1ef"/>
+  <text x="120" y="122" fill="#0f172a" font-size="34" font-family="Avenir Next,Segoe UI,sans-serif" font-weight="800">Wedding Invite Suite (Canva)</text>
+  <text x="120" y="170" fill="#475569" font-size="25" font-family="Avenir Next,Segoe UI,sans-serif">Invitation + RSVP wording layout</text>
+  <rect x="120" y="186" width="960" height="1" fill="#e2e8f0"/>
+  <rect x="130" y="205" width="164" height="34" rx="17" fill="#ffffff"/><text x="145" y="227" fill="#9d174d" font-size="18" font-family="Avenir Next,Segoe UI,sans-serif" font-weight="700">Invite</text><rect x="310" y="205" width="164" height="34" rx="17" fill="#ffffff"/><text x="325" y="227" fill="#9d174d" font-size="18" font-family="Avenir Next,Segoe UI,sans-serif" font-weight="700">RSVP</text><rect x="490" y="205" width="164" height="34" rx="17" fill="#ffffff"/><text x="505" y="227" fill="#9d174d" font-size="18" font-family="Avenir Next,Segoe UI,sans-serif" font-weight="700">Details card</text>
+  <rect x="120" y="280" width="960" height="36" rx="8" fill="#f1f5f9"/>
+  <text x="145" y="304" fill="#334155" font-size="18" font-family="Avenir Next,Segoe UI,sans-serif" font-weight="700">Section</text>
+  <text x="420" y="304" fill="#334155" font-size="18" font-family="Avenir Next,Segoe UI,sans-serif" font-weight="700">Sample Content</text>
+  <text x="930" y="304" fill="#334155" font-size="18" font-family="Avenir Next,Segoe UI,sans-serif" font-weight="700" text-anchor="end">Outcome</text>
+  <rect x="120" y="310" width="960" height="64" fill="#ffffff"/><text x="145" y="350" fill="#0f172a" font-size="22" font-family="Avenir Next,Segoe UI,sans-serif" font-weight="700">Main invite</text><text x="420" y="350" fill="#334155" font-size="21" font-family="Avenir Next,Segoe UI,sans-serif">Ava and Liam request your presence...</text><text x="930" y="350" fill="#9d174d" font-size="20" font-family="Avenir Next,Segoe UI,sans-serif" font-weight="700" text-anchor="end">5x7 print</text><rect x="120" y="374" width="960" height="64" fill="#f8fafc"/><text x="145" y="414" fill="#0f172a" font-size="22" font-family="Avenir Next,Segoe UI,sans-serif" font-weight="700">RSVP</text><text x="420" y="414" fill="#334155" font-size="21" font-family="Avenir Next,Segoe UI,sans-serif">Kindly reply by September 12</text><text x="930" y="414" fill="#9d174d" font-size="20" font-family="Avenir Next,Segoe UI,sans-serif" font-weight="700" text-anchor="end">A2 card</text><rect x="120" y="438" width="960" height="64" fill="#ffffff"/><text x="145" y="478" fill="#0f172a" font-size="22" font-family="Avenir Next,Segoe UI,sans-serif" font-weight="700">Details</text><text x="420" y="478" fill="#334155" font-size="21" font-family="Avenir Next,Segoe UI,sans-serif">Ceremony 4:00 PM at Lakeside Hall</text><text x="930" y="478" fill="#9d174d" font-size="20" font-family="Avenir Next,Segoe UI,sans-serif" font-weight="700" text-anchor="end">A2 card</text>
+  <rect x="120" y="574" width="960" height="56" rx="10" fill="#eef6ff"/>
+  <text x="145" y="610" fill="#1e3a8a" font-size="22" font-family="Avenir Next,Segoe UI,sans-serif" font-weight="700">Real sample output included in buyer download.</text>
 </svg>
