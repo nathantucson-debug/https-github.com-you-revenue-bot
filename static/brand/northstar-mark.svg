@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96" role="img" aria-label="Northstar Studio logo">
+  <defs>
+    <linearGradient id="nstar" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6ee7ff"/>
+      <stop offset="55%" stop-color="#2f7fff"/>
+      <stop offset="100%" stop-color="#1f3fae"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="80" height="80" rx="24" fill="#0b1330"/>
+  <circle cx="48" cy="48" r="25" fill="#0f1d47" stroke="#1d3c86" stroke-width="2"/>
+  <path d="M48 22 L53 43 L74 48 L53 53 L48 74 L43 53 L22 48 L43 43 Z" fill="url(#nstar)"/>
+  <circle cx="48" cy="48" r="4.5" fill="#dff6ff"/>
+</svg>

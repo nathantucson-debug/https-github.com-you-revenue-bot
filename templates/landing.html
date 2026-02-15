@@ -5,38 +5,45 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Northstar Studio | Premium Digital Products</title>
   <style>
-    :root { --ink:#111827; --muted:#4b5563; --line:#dbe3f0; --bg:#f4f7fc; --brand:#0b5bd3; --soft:#eef4ff; }
+    @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Sora:wght@600;700;800&display=swap');
+    :root { --ink:#0f172a; --muted:#4a556e; --line:#dbe3f0; --bg:#f2f6ff; --brand:#1e4ed8; --brand-ink:#0b1b4b; --soft:#ecf2ff; --accent:#0ea5e9; }
     * { box-sizing: border-box; }
-    body { margin:0; font-family:"Avenir Next","Segoe UI",sans-serif; color:var(--ink); background:linear-gradient(180deg,#f8fbff 0%,var(--bg) 100%); }
+    body { margin:0; font-family:"Manrope","Avenir Next","Segoe UI",sans-serif; color:var(--ink); background:
+      radial-gradient(1400px 500px at 12% -8%, rgba(14,165,233,.20), transparent 55%),
+      radial-gradient(1200px 500px at 100% -18%, rgba(30,78,216,.16), transparent 58%),
+      linear-gradient(180deg,#f8fbff 0%,var(--bg) 100%); }
     .wrap { max-width:1140px; margin:0 auto; padding:0 1rem; }
-    .topline { text-align:center; font-size:.85rem; color:#1f355c; background:#eaf2ff; border-bottom:1px solid #d6e4ff; padding:.42rem .6rem; }
+    .topline { text-align:center; font-size:.85rem; color:#1f355c; background:#eaf2ff; border-bottom:1px solid #d6e4ff; padding:.42rem .6rem; font-weight:700; }
     header { position:sticky; top:0; z-index:20; backdrop-filter:blur(8px); background:rgba(248,251,255,.9); border-bottom:1px solid rgba(219,227,240,.8); }
     .nav { display:flex; justify-content:space-between; align-items:center; padding:1rem 0; }
-    .brand { font-weight:800; }
-    .btn { display:inline-block; text-decoration:none; border-radius:10px; padding:.62rem .95rem; font-weight:700; border:1px solid var(--line); color:var(--ink); background:#fff; }
-    .btn.primary { background:var(--brand); color:#fff; border-color:var(--brand); }
+    .brand-lock { display:flex; align-items:center; gap:.58rem; text-decoration:none; color:inherit; }
+    .brand-mark { width:34px; height:34px; border-radius:10px; box-shadow:0 8px 18px rgba(15,23,42,.12); }
+    .brand-name { font-family:"Sora","Manrope",sans-serif; font-weight:800; letter-spacing:-.02em; font-size:1.12rem; line-height:1.1; }
+    .brand-tag { font-size:.78rem; color:#5f6f8d; font-weight:700; margin-top:.08rem; }
+    .btn { display:inline-block; text-decoration:none; border-radius:12px; padding:.62rem 1rem; font-weight:800; border:1px solid var(--line); color:var(--ink); background:#fff; }
+    .btn.primary { background:var(--brand); color:#fff; border-color:var(--brand); box-shadow:0 10px 20px rgba(30,78,216,.26); }
 
     .hero { padding:2.8rem 0 1.6rem; }
-    .hero-box { background:#fff; border:1px solid var(--line); border-radius:16px; padding:1.2rem; }
-    h1 { margin:0 0 .7rem; font-size:clamp(2rem,4.6vw,3.3rem); line-height:1.05; letter-spacing:-.03em; }
+    .hero-box { background:linear-gradient(140deg,#ffffff 0%,#f2f6ff 100%); border:1px solid var(--line); border-radius:22px; padding:1.35rem; box-shadow:0 24px 50px rgba(15,23,42,.08); }
+    h1 { margin:0 0 .7rem; font-family:"Sora","Manrope",sans-serif; font-size:clamp(2rem,4.6vw,3.3rem); line-height:1.05; letter-spacing:-.03em; color:var(--brand-ink); }
     .lead { margin:0 0 1rem; color:var(--muted); line-height:1.6; max-width:64ch; }
     .row { display:flex; gap:.55rem; flex-wrap:wrap; }
 
     .section { padding:1rem 0 1.5rem; }
-    .section h2 { margin:0 0 .55rem; font-size:1.45rem; }
+    .section h2 { margin:0 0 .55rem; font-family:"Sora","Manrope",sans-serif; font-size:1.45rem; }
     .note { margin:0 0 .9rem; color:var(--muted); }
 
     .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:.85rem; }
-    .card { background:#fff; border:1px solid var(--line); border-radius:14px; padding:.95rem; display:flex; flex-direction:column; gap:.42rem; }
+    .card { background:#fff; border:1px solid var(--line); border-radius:16px; padding:.95rem; display:flex; flex-direction:column; gap:.42rem; box-shadow:0 10px 24px rgba(15,23,42,.04); }
     .thumb { height:112px; border-radius:10px; border:1px solid rgba(255,255,255,.45); box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); width:100%; object-fit:cover; background:#e6edf8; }
     .cat { align-self:flex-start; font-size:.73rem; font-weight:700; background:var(--soft); color:#194ead; border:1px solid #d1deff; border-radius:999px; padding:.2rem .5rem; }
-    .title { margin:.15rem 0; font-size:1.04rem; }
+    .title { margin:.15rem 0; font-family:"Sora","Manrope",sans-serif; font-size:1.04rem; }
     .muted { color:var(--muted); }
     .price { margin-top:auto; font-weight:800; font-size:1.18rem; }
 
     .bundles { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:.85rem; }
     .bundle { background:#fff; border:1px solid var(--line); border-radius:14px; padding:1rem; }
-    .bundle h3 { margin:0 0 .3rem; }
+    .bundle h3 { margin:0 0 .3rem; font-family:"Sora","Manrope",sans-serif; }
     .bundle ul { margin:.45rem 0 .75rem; padding-left:1.1rem; }
 
     .proof { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:.8rem; }
@@ -44,7 +51,7 @@
     blockquote footer { margin-top:.5rem; color:var(--muted); font-size:.85rem; }
 
     .faq details { background:#fff; border:1px solid var(--line); border-radius:12px; padding:.7rem .9rem; margin-bottom:.55rem; }
-    .faq summary { font-weight:700; cursor:pointer; }
+    .faq summary { font-weight:800; cursor:pointer; font-family:"Sora","Manrope",sans-serif; }
     .faq p { margin:.5rem 0 0; color:var(--muted); }
 
     .cta { background:#0f172a; color:#fff; border-radius:16px; padding:1.05rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:.7rem; }
@@ -56,7 +63,13 @@
   <div class="topline">7-day satisfaction guarantee with one-time store credit per payment, clear previews before purchase, and support-first service.</div>
   <header>
     <div class="wrap nav">
-      <div class="brand">Northstar Studio</div>
+      <a class="brand-lock" href="/">
+        <img class="brand-mark" src="/static/brand/northstar-mark.svg" alt="Northstar Studio">
+        <div>
+          <div class="brand-name">Northstar Studio</div>
+          <div class="brand-tag">Premium Digital Systems</div>
+        </div>
+      </a>
       <a class="btn" href="/store">Shop Catalog</a>
     </div>
   </header>

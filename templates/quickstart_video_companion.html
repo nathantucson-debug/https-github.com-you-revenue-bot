@@ -5,19 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ order_bump.name }} | Northstar Studio</title>
   <style>
-    :root { --ink:#111827; --muted:#4b5563; --line:#dbe3f0; --bg:#f4f7fc; --brand:#0b5bd3; --deep:#0f172a; }
+    @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Sora:wght@600;700;800&display=swap');
+    :root { --ink:#0f172a; --muted:#4b5563; --line:#dbe3f0; --bg:#f2f6ff; --brand:#1e4ed8; --deep:#0f172a; }
     * { box-sizing:border-box; }
-    body { margin:0; font-family:"Avenir Next","Segoe UI",sans-serif; color:var(--ink); background:linear-gradient(180deg,#f8fbff 0%,var(--bg) 100%); }
+    body { margin:0; font-family:"Manrope","Avenir Next","Segoe UI",sans-serif; color:var(--ink); background:
+      radial-gradient(1000px 420px at 6% -10%, rgba(14,165,233,.18), transparent 56%),
+      linear-gradient(180deg,#f8fbff 0%,var(--bg) 100%); }
     .wrap { max-width:980px; margin:0 auto; padding:0 1rem; }
     header { border-bottom:1px solid var(--line); background:rgba(255,255,255,.9); position:sticky; top:0; z-index:10; backdrop-filter:blur(8px); }
     .nav { display:flex; justify-content:space-between; align-items:center; padding:1rem 0; }
-    .brand { font-weight:800; }
-    .btn { display:inline-block; text-decoration:none; border-radius:10px; padding:.62rem .95rem; font-weight:700; border:1px solid var(--line); color:var(--ink); background:#fff; }
-    .btn.primary { background:var(--brand); color:#fff; border-color:var(--brand); }
+    .brand-lock { display:flex; align-items:center; gap:.58rem; text-decoration:none; color:inherit; }
+    .brand-mark { width:34px; height:34px; border-radius:10px; box-shadow:0 8px 18px rgba(15,23,42,.12); }
+    .brand-name { font-family:"Sora","Manrope",sans-serif; font-weight:800; letter-spacing:-.02em; font-size:1.12rem; line-height:1.1; }
+    .brand-tag { font-size:.78rem; color:#5f6f8d; font-weight:700; margin-top:.08rem; }
+    .btn { display:inline-block; text-decoration:none; border-radius:12px; padding:.62rem .95rem; font-weight:800; border:1px solid var(--line); color:var(--ink); background:#fff; }
+    .btn.primary { background:var(--brand); color:#fff; border-color:var(--brand); box-shadow:0 10px 20px rgba(30,78,216,.24); }
     main { padding:1.5rem 0 2rem; }
     .hero { background:#fff; border:1px solid var(--line); border-radius:14px; padding:1rem; }
     .pill { display:inline-block; font-size:.75rem; font-weight:700; border-radius:999px; padding:.22rem .55rem; background:#eaf2ff; border:1px solid #d6e4ff; color:#1e4d9a; margin-bottom:.45rem; }
-    h1 { margin:.2rem 0 .5rem; font-size:2rem; }
+    h1 { margin:.2rem 0 .5rem; font-size:2rem; font-family:"Sora","Manrope",sans-serif; }
     p { color:var(--muted); line-height:1.6; }
     .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:.8rem; margin-top:1rem; }
     .card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:.9rem; }
@@ -32,7 +38,13 @@
 <body>
   <header>
     <div class="wrap nav">
-      <div class="brand">Northstar Studio</div>
+      <a class="brand-lock" href="/">
+        <img class="brand-mark" src="/static/brand/northstar-mark.svg" alt="Northstar Studio">
+        <div>
+          <div class="brand-name">Northstar Studio</div>
+          <div class="brand-tag">Premium Digital Systems</div>
+        </div>
+      </a>
       <a class="btn" href="/store">Back to Store</a>
     </div>
   </header>
