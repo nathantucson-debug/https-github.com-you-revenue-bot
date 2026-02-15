@@ -18,6 +18,7 @@ APP_PORT = int(os.getenv("PORT", os.getenv("APP_PORT", "8080")))
 DATABASE_PATH = os.getenv("DATABASE_PATH", "data/revenue_bot.db")
 ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "change-me")
 AUTO_GENERATE_INTERVAL_MINUTES = int(os.getenv("AUTO_GENERATE_INTERVAL_MINUTES", "60"))
+MIN_STORE_PRODUCTS = int(os.getenv("MIN_STORE_PRODUCTS", "6"))
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
 APP_PUBLIC_URL = os.getenv("APP_PUBLIC_URL", "")
@@ -197,6 +198,21 @@ def list_products(active_only: bool = True) -> list[dict]:
         ).fetchall()
     conn.close()
     return [enrich_product(dict(r)) for r in rows]
+
+
+def count_active_products() -> int:
+    conn = db()
+    row = conn.execute("SELECT COUNT(*) AS c FROM products WHERE active = 1").fetchone()
+    conn.close()
+    return int(row["c"]) if row else 0
+
+
+def ensure_min_products(min_products: int) -> int:
+    existing = count_active_products()
+    to_create = max(0, min_products - existing)
+    for _ in range(to_create):
+        create_product()
+    return to_create
 
 
 def get_product(product_id: str) -> dict | None:
@@ -401,6 +417,14 @@ def admin_guard() -> bool:
 
 
 @app.get("/")
+def landing():
+    products = list_products()
+    featured = products[:6]
+    return render_template("landing.html", products=featured)
+
+
+@app.get("/admin")
+@app.get("/dashboard")
 def dashboard():
     products = list_products()
     conn = db()
@@ -464,6 +488,17 @@ def admin_generate():
     return jsonify({"product": product})
 
 
+@app.post("/admin/generate-batch")
+def admin_generate_batch():
+    if not admin_guard():
+        return jsonify({"error": "unauthorized"}), 401
+
+    count = int(flask_request.args.get("count", "5"))
+    count = max(1, min(count, 50))
+    created = [create_product() for _ in range(count)]
+    return jsonify({"created_count": len(created), "products": created})
+
+
 @app.post("/admin/run-payouts")
 def admin_run_payouts():
     if not admin_guard():
@@ -501,6 +536,7 @@ def auto_generator_loop(stop_event: threading.Event) -> None:
 
 def main() -> None:
     init_db()
+    ensure_min_products(MIN_STORE_PRODUCTS)
 
     stop_event = threading.Event()
     generator_thread = threading.Thread(target=auto_generator_loop, args=(stop_event,), daemon=True)

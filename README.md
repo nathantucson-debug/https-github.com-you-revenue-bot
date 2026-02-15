@@ -44,10 +44,15 @@ Notes:
 ## Key endpoints
 
 - `GET /` dashboard
+- `GET /` landing page
+- `GET /store` storefront
 - `GET /health`
 - `GET /api/products`
+- `GET /products/<product_id>`
 - `GET /checkout/<product_id>`
+- `GET /admin` dashboard
 - `POST /admin/generate` (header: `x-admin-token`)
+- `POST /admin/generate-batch?count=10` (header: `x-admin-token`)
 - `POST /admin/run-payouts` (header: `x-admin-token`)
 - `POST /webhooks/stripe`
 
