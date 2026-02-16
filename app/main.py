@@ -1059,45 +1059,48 @@ def _product_content_profile(product: dict) -> dict:
     )
 
     plan_rows = []
-    for idx, row in enumerate(rows[:6], start=1):
-        step_name = row[0] if len(row) > 0 else f"Step {idx}"
-        action = row[1] if len(row) > 1 else "Execute the template workflow"
-        timing = row[2] if len(row) > 2 else "This week"
-        result = row[-1] if row else "Improved outcome"
-        plan_rows.append([f"Step {idx}", step_name, action, timing, result])
-
-    if not plan_rows:
-        for i, item in enumerate(included[:4], start=1):
-            plan_rows.append([f"Step {i}", item, f"Implement {item.lower()}", "This week", "Working first version"])
+    for i, item in enumerate(included[:4], start=1):
+        plan_rows.append(
+            [
+                f"Step {i}",
+                f"Complete {item}",
+                f"Customize and finalize the {item.lower()} file for your business use case.",
+                "Today" if i == 1 else f"Day {i}",
+                f"{item} ready for real-world use",
+            ]
+        )
+    if len(plan_rows) < 4:
+        for idx, row in enumerate(rows[: max(0, 4 - len(plan_rows))], start=len(plan_rows) + 1):
+            name = row[0] if len(row) > 0 else f"Deliverable {idx}"
+            action = row[1] if len(row) > 1 else "Finalize the deliverable"
+            plan_rows.append(
+                [
+                    f"Step {idx}",
+                    str(name),
+                    f"{action}. Complete and save your final version.",
+                    f"Day {idx}",
+                    "Finished version exported",
+                ]
+            )
     if not plan_rows:
         plan_rows = [
-            ["Step 1", "Setup", "Configure your first deliverable", "Today", "Ready to use"],
-            ["Step 2", "Implementation", "Apply in your live workflow", "This week", "First real output"],
-            ["Step 3", "Optimization", "Refine based on feedback", "Week 2", "Higher quality results"],
+            ["Step 1", "Customize core file", "Replace sample text with your real business details.", "Today", "Buyer-ready first draft"],
+            ["Step 2", "Publish or send", "Use the completed file in your live workflow immediately.", "Day 2", "First live usage completed"],
+            ["Step 3", "Improve version", "Apply feedback and finalize your polished version.", "Day 3", "Final version complete"],
         ]
 
     workbook_rows = []
     for idx, row in enumerate(plan_rows, start=1):
-        workbook_rows.append(
-            [
-                f"W{idx:02d}",
-                row[2],
-                row[3],
-                "Not Started",
-                row[4],
-                "Pending",
-                "",
-            ]
-        )
+        workbook_rows.append([f"W{idx:02d}", row[1], row[2], row[3], "Not Started", row[4], ""])
 
     quickstart_steps = [f"{row[1]}: {row[2]}" for row in plan_rows[:4]]
     quickstart_steps.append(f"Run a full pass and compare results to: {preview.get('result', 'your target outcome')}")
 
-    kpi_rows = [[metric, "Baseline", "Target", "Week 1", "Week 2", "Week 3", "Week 4", "Notes"] for metric in defaults["kpis"]]
+    kpi_rows = [[metric, "", "", "", "", "", "", ""] for metric in defaults["kpis"]]
     calendar_rows = []
     for day in range(1, 31):
         source = plan_rows[(day - 1) % len(plan_rows)]
-        calendar_rows.append([f"Day {day}", source[2], source[4], "Planned", ""])
+        calendar_rows.append([f"Day {day}", source[1], source[4], "Not Started", ""])
 
     return {
         "buyer_goal": defaults["buyer_goal"],
@@ -1109,6 +1112,41 @@ def _product_content_profile(product: dict) -> dict:
         "kpi_rows": kpi_rows,
         "calendar_rows": calendar_rows,
     }
+
+
+def _asset_template_file(title: str, category: str, item: str, idx: int) -> tuple[str, str]:
+    filename = f"asset_{idx:02d}_{slugify(item)[:42]}.md"
+    content = "\n".join(
+        [
+            f"# {item}",
+            "",
+            f"Product: {title}",
+            f"Category: {category}",
+            "",
+            "## What this is",
+            f"A ready-to-customize template for: {item.lower()}.",
+            "",
+            "## How to use",
+            "1. Replace bracketed placeholders with your real details.",
+            "2. Save your finalized version as a new file.",
+            "3. Use it immediately in your business or workflow.",
+            "",
+            "## Copy/Paste Template",
+            "[Title]",
+            "[Primary objective]",
+            "[Audience/use case]",
+            "[Core sections or steps]",
+            "[Call to action / next step]",
+            "",
+            "## Filled Example",
+            f"{item} - Final",
+            "Objective: improve speed, quality, and consistency.",
+            "Use case: first live rollout this week.",
+            "Sections: setup, execution, review, improvements.",
+            "Next step: publish/send/use this finalized file today.",
+        ]
+    )
+    return filename, content
 
 
 def _customer_pack_files(product: dict) -> list[tuple[str, str]]:
@@ -1158,8 +1196,8 @@ th{background:#f7faff;color:#1e3a5f}
             "START HERE",
             "1) Open 01_Start_Here.html",
             "2) Fill 02_Quickstart_Action_Plan.csv and 03_Master_Workbook.csv",
-            "3) Use 04_Copy_Paste_Scripts.txt and 05_Performance_Tracker.csv in your workflow",
-            "4) Follow 06_30_Day_Execution_Calendar.csv for execution cadence",
+            "3) Open the asset_XX files and customize each one for your real use case",
+            "4) Use 04_Copy_Paste_Scripts.txt and 05_Performance_Tracker.csv weekly",
             "",
             "This package is built for immediate real-world implementation.",
         ]
@@ -1178,6 +1216,7 @@ th{background:#f7faff;color:#1e3a5f}
 <div class="cta">Quick win: {html.escape(profile["quick_win"])}</div>
 <p><strong>Buyer goal:</strong> {html.escape(profile["buyer_goal"])}</p>
 <p><strong>Price paid:</strong> {price}</p>
+<p><strong>Important:</strong> The <code>asset_XX_*.md</code> files are your actual editable product files.</p>
 </section></div></body></html>"""
 
     playbook_html = f"""<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">{style}</head><body>
@@ -1219,11 +1258,11 @@ th{background:#f7faff;color:#1e3a5f}
 </section></div></body></html>"""
 
     quickstart_csv = _csv_block(
-        ["Task ID", "Action", "Due", "Status", "Output", "Notes"],
-        [[f"Q{idx+1:02d}", row[2], row[3], "Planned", row[4], ""] for idx, row in enumerate(profile["plan_rows"][:5])],
+        ["Task ID", "Deliverable", "Action", "Due", "Status", "Output", "Notes"],
+        [[f"Q{idx+1:02d}", row[1], row[2], row[3], "Not Started", row[4], ""] for idx, row in enumerate(profile["plan_rows"][:5])],
     )
     workbook_csv = _csv_block(
-        ["Workstream ID", "Workstream", "Due", "Status", "Definition of done", "Reviewer", "Notes"],
+        ["Workstream ID", "Deliverable", "Action", "Due", "Status", "Definition of done", "Notes"],
         profile["workbook_rows"],
     )
     tracker_csv = _csv_block(
@@ -1248,9 +1287,9 @@ th{background:#f7faff;color:#1e3a5f}
             "",
             *script_lines,
             "",
-            "Customer support response:",
-            "- Thanks for your purchase. Start with 01_Start_Here.html and complete the quickstart file first.",
-            "- If you want a faster outcome, focus on one use case this week and track it in 05_Performance_Tracker.csv.",
+            "Customer message template:",
+            "- Thanks for your purchase. Start with 01_Start_Here.html, then customize each asset_XX file.",
+            "- Complete one finalized asset today and use it in your real workflow.",
         ]
     )
 
@@ -1304,7 +1343,7 @@ function exportCsv() {{
 }}
 </script></body></html>"""
 
-    return [
+    files = [
         ("00_READ_FIRST.txt", readme_txt),
         ("01_Start_Here.html", start_here_html),
         ("02_Quickstart_Action_Plan.csv", quickstart_csv),
@@ -1318,6 +1357,9 @@ function exportCsv() {{
         ("10_Interactive_Builder.html", workspace_html),
         ("11_License_and_Guarantee.html", license_html),
     ]
+    for i, item in enumerate(included, start=1):
+        files.append(_asset_template_file(title, category, item, i))
+    return files
 
 
 def build_customer_product_pack(product: dict) -> bytes:
