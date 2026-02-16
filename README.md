@@ -5,6 +5,7 @@ This is a legal automation starter app for online revenue operations.
 This app provides a production-style digital storefront pipeline:
 
 - curated product catalog with brand-focused storefront pages
+- 50 seeded high-demand digital products across proven categories
 - product and bundle checkout with optional order bump
 - lead capture for abandoned-cart follow-up
 - Stripe checkout + webhook sale confirmation
@@ -40,6 +41,8 @@ python app/main.py
 ```
 
 Open: `http://localhost:8080`
+
+By default, the app auto-seeds `50` active products (`MIN_STORE_PRODUCTS=50`).
 
 ## Go live now (Render)
 

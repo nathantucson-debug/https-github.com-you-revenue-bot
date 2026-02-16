@@ -21,7 +21,7 @@ services:
       - key: AUTO_GENERATE_INTERVAL_MINUTES
         value: 120
       - key: MIN_STORE_PRODUCTS
-        value: 12
+        value: 50
       - key: STRIPE_SECRET_KEY
         sync: false
       - key: STRIPE_WEBHOOK_SECRET
