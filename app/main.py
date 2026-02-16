@@ -1632,16 +1632,24 @@ def public_base_url() -> str:
 
 
 def admin_token_value() -> str:
-    return (
+    raw = (
         flask_request.headers.get("x-admin-token")
         or flask_request.args.get("admin_token")
         or flask_request.form.get("admin_token")
         or ""
     )
+    # Be tolerant of copy/paste issues from browser or terminal.
+    token = raw.strip().strip('"').strip("'").replace(" ", "+")
+    return token
 
 
 def admin_guard_any() -> bool:
-    return admin_token_value() == ADMIN_TOKEN
+    provided = admin_token_value()
+    expected = (ADMIN_TOKEN or "").strip().replace(" ", "+")
+    if provided == expected:
+        return True
+    # Also allow missing base64 padding in pasted tokens.
+    return provided.rstrip("=") == expected.rstrip("=")
 
 
 def b64url(data: bytes) -> str:
@@ -2434,7 +2442,11 @@ def process_pending_payouts(limit: int = 10) -> dict:
 
 
 def admin_guard() -> bool:
-    return flask_request.headers.get("x-admin-token") == ADMIN_TOKEN
+    provided = (flask_request.headers.get("x-admin-token") or "").strip().replace(" ", "+")
+    expected = (ADMIN_TOKEN or "").strip().replace(" ", "+")
+    if provided == expected:
+        return True
+    return provided.rstrip("=") == expected.rstrip("=")
 
 
 @app.get("/")
@@ -2672,8 +2684,8 @@ def admin_download_product_zip(product_id: str):
     product = get_product(product_id)
     if not product:
         return jsonify({"error": "product not found"}), 404
-    payload = build_product_qc_zip(product)
-    filename = f"{slugify(product.get('title', 'product'))}-qc-pack.zip"
+    payload = build_customer_product_pack(product)
+    filename = f"{slugify(product.get('title', 'product'))}-retail-pack.zip"
     return Response(
         payload,
         mimetype="application/zip",
@@ -2693,10 +2705,11 @@ def admin_download_all_qc_zip():
     with zipfile.ZipFile(buf, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
         for p in products:
             folder = f"{slugify(p.get('title', 'product'))}/"
-            zf.writestr(folder + "qc-pack.zip", build_product_qc_zip(p))
+            for name, content in _customer_pack_files(p):
+                zf.writestr(folder + name, content)
         zf.writestr(
             "README.txt",
-            f"Northstar Studio QC master archive\nTotal products: {len(products)}\n"
+            f"Northstar Studio retail pack QC archive\nTotal products: {len(products)}\n"
             + (f"Category filter: {selected_category}\n" if selected_category else ""),
         )
     suffix = f"-{slugify(selected_category)}" if selected_category else ""
