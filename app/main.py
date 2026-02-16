@@ -1,4 +1,5 @@
 import base64
+import html
 import hashlib
 import hmac
 import json
@@ -12,7 +13,7 @@ from email.message import EmailMessage
 from urllib import parse, request
 from urllib.error import HTTPError, URLError
 
-from flask import Flask, jsonify, redirect, render_template, request as flask_request
+from flask import Flask, Response, jsonify, redirect, render_template, request as flask_request
 
 APP_HOST = os.getenv("APP_HOST", "0.0.0.0")
 APP_PORT = int(os.getenv("PORT", os.getenv("APP_PORT", "8080")))
@@ -795,9 +796,40 @@ def enrich_product(product: dict) -> dict:
     product["theme_start"] = theme_start
     product["theme_end"] = theme_end
     slug = slugify(product.get("title", "product"))
-    product["cover_image"] = f"/static/covers/{slug}.svg"
+    static_cover = os.path.join(app.static_folder, "covers", f"{slug}.svg")
+    if os.path.exists(static_cover):
+        product["cover_image"] = f"/static/covers/{slug}.svg"
+    else:
+        title_q = parse.quote(product.get("title", "Premium Digital Product"))
+        cat_q = parse.quote(category)
+        start_q = parse.quote(theme_start)
+        end_q = parse.quote(theme_end)
+        product["cover_image"] = (
+            f"/dynamic-cover.svg?title={title_q}&category={cat_q}&start={start_q}&end={end_q}"
+        )
     product["real_world_preview"] = real_world_preview(product.get("title", ""))
     return product
+
+
+def _wrap_cover_title(text: str, max_chars: int = 28, max_lines: int = 2) -> list[str]:
+    words = (text or "Premium Digital Product").split()
+    lines: list[str] = []
+    current = ""
+    for word in words:
+        candidate = (current + " " + word).strip()
+        if len(candidate) <= max_chars:
+            current = candidate
+        else:
+            if current:
+                lines.append(current)
+            current = word
+            if len(lines) >= max_lines - 1:
+                break
+    if current and len(lines) < max_lines:
+        lines.append(current)
+    if not lines:
+        lines = ["Premium Digital Product"]
+    return lines[:max_lines]
 
 
 def real_world_preview(title: str) -> dict:
@@ -2162,6 +2194,43 @@ def landing():
     featured = products[:8]
     categories = sorted({p["category"] for p in products})
     return render_template("landing.html", products=featured, categories=categories, bundles=list_bundles())
+
+
+@app.get("/dynamic-cover.svg")
+def dynamic_cover() -> Response:
+    title = flask_request.args.get("title", "Premium Digital Product")
+    category = flask_request.args.get("category", "Northstar Studio")
+    start = flask_request.args.get("start", "#2563eb")
+    end = flask_request.args.get("end", "#1d4ed8")
+    lines = _wrap_cover_title(title)
+
+    safe_category = html.escape(category[:40])
+    safe_lines = [html.escape(line[:40]) for line in lines]
+
+    line_y_start = 250
+    line_gap = 84
+    line_markup = "".join(
+        f'<text x="84" y="{line_y_start + idx * line_gap}" fill="#ffffff" '
+        f'font-size="64" font-family="Sora, Arial, sans-serif" font-weight="800">{line}</text>'
+        for idx, line in enumerate(safe_lines)
+    )
+
+    svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
+<defs>
+  <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="{html.escape(start)}"/>
+    <stop offset="100%" stop-color="{html.escape(end)}"/>
+  </linearGradient>
+</defs>
+<rect width="1200" height="675" rx="28" fill="url(#g)"/>
+<rect x="84" y="72" width="290" height="56" rx="28" fill="rgba(255,255,255,0.18)"/>
+<text x="116" y="109" fill="#ffffff" font-size="34" font-family="Sora, Arial, sans-serif" font-weight="700">Northstar Studio</text>
+<text x="84" y="178" fill="rgba(255,255,255,0.92)" font-size="38" font-family="Manrope, Arial, sans-serif">{safe_category}</text>
+{line_markup}
+<rect x="84" y="484" width="1032" height="2" fill="rgba(255,255,255,0.3)"/>
+<text x="84" y="560" fill="rgba(255,255,255,0.92)" font-size="30" font-family="Manrope, Arial, sans-serif">Premium Digital Product</text>
+</svg>"""
+    return Response(svg, mimetype="image/svg+xml")
 
 
 @app.get("/store")
