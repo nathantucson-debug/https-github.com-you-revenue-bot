@@ -184,8 +184,15 @@ Option B: Manual token:
 - Cover assets are in `static/covers/`.
 - If SMTP is not configured, delivery emails are logged as simulated.
 - Customer delivery packs now include buyer-facing files only:
+  - `00_READ_FIRST.txt`
   - `01_Start_Here.html`
-  - `02_Product_Guide.html`
-  - `03_Implementation_Workbook.csv`
-  - `04_Quickstart_Checklist.html`
-  - `05_License_and_Guarantee.html`
+  - `02_Quickstart_Action_Plan.csv`
+  - `03_Master_Workbook.csv`
+  - `04_Copy_Paste_Scripts.txt`
+  - `05_Performance_Tracker.csv`
+  - `06_30_Day_Execution_Calendar.csv`
+  - `07_Implementation_Playbook.html`
+  - `08_Filled_Example.csv`
+  - `09_90_Minute_Setup_Sprint.html`
+  - `10_Interactive_Builder.html`
+  - `11_License_and_Guarantee.html`

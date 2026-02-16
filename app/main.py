@@ -866,276 +866,268 @@ def parse_download_token(token: str) -> dict | None:
     return body
 
 
+def _csv_escape(value: str) -> str:
+    return str(value).replace('"', '""')
+
+
+def _csv_line(values: list[str]) -> str:
+    return ",".join(f'"{_csv_escape(v)}"' for v in values)
+
+
+def _csv_block(headers: list[str], rows: list[list[str]]) -> str:
+    lines = [_csv_line(headers)]
+    lines.extend(_csv_line([str(c) for c in row]) for row in rows)
+    return "\n".join(lines)
+
+
+def _product_content_profile(product: dict) -> dict:
+    title = product.get("title", "Digital Product")
+    category = product.get("category", "General")
+    preview = product.get("real_world_preview", {})
+    included = product.get("preview_items", [])
+    rows = preview.get("rows") or []
+
+    category_profiles = {
+        "Creator Growth": {
+            "buyer_goal": "publish conversion-focused content consistently",
+            "quick_win": "use one hook + one proof + one CTA to publish your first post today",
+            "scripts": [
+                "Hook: Most creators are stuck because they skip this one step.",
+                "Story: Here is exactly what changed results for my audience.",
+                "CTA: Comment GUIDE and I will send the full template.",
+                "Offer line: If you want this system done-for-you, reply READY.",
+            ],
+            "kpis": ["Posts Published", "Average Watch Time", "Saves", "Profile Clicks", "DM Starts"],
+        },
+        "Creator Business": {
+            "buyer_goal": "close better client opportunities with clearer positioning",
+            "quick_win": "customize the package/pricing section and send one pitch today",
+            "scripts": [
+                "Pitch opener: I create conversion-focused short-form assets for [brand type].",
+                "Proof line: Recent campaigns improved [metric] by [result].",
+                "Package line: I recommend starting with the [Starter] test package.",
+                "Close: Would you like a tailored concept board for your next launch?",
+            ],
+            "kpis": ["Pitches Sent", "Reply Rate", "Calls Booked", "Proposal Acceptance", "Revenue Closed"],
+        },
+        "Ecommerce": {
+            "buyer_goal": "increase product page discoverability and conversion",
+            "quick_win": "optimize one listing title, tags, and first description paragraph",
+            "scripts": [
+                "Title format: Core keyword + specific use case + differentiator.",
+                "Opening line: Buyer outcome in one sentence, no fluff.",
+                "Feature bullets: Problem solved, key specs, what is included.",
+                "Conversion CTA: Add to cart now to get instant access.",
+            ],
+            "kpis": ["Impressions", "CTR", "Favorites", "Add To Cart Rate", "Orders"],
+        },
+        "Operations": {
+            "buyer_goal": "standardize repeatable workflows with less rework",
+            "quick_win": "document one critical SOP and run it once this week",
+            "scripts": [
+                "SOP purpose: This process ensures quality and predictable turnaround.",
+                "Trigger: Start this SOP when [event] occurs.",
+                "QA check: Confirm output meets [specific acceptance criteria].",
+                "Escalation: If blocked, route to [owner] within [SLA].",
+            ],
+            "kpis": ["Cycle Time", "Missed Steps", "Rework Rate", "On-Time Delivery", "Owner Clarity Score"],
+        },
+        "Productivity": {
+            "buyer_goal": "plan and execute priorities without chaos",
+            "quick_win": "set top 3 outcomes for this week and time-block them now",
+            "scripts": [
+                "Daily plan: Top outcome, deep-work block, admin block, review.",
+                "Decision rule: If it does not move weekly goals, defer it.",
+                "Shutdown ritual: Capture open loops and assign next action.",
+                "Weekly review: Keep, improve, remove one workflow.",
+            ],
+            "kpis": ["Priority Completion", "Deep Work Hours", "Carryover Tasks", "Blocked Tasks", "Weekly Wins"],
+        },
+        "Finance": {
+            "buyer_goal": "improve cash clarity and spending decisions",
+            "quick_win": "enter this month’s top 10 transactions and categorize them",
+            "scripts": [
+                "Revenue check: Compare actual vs planned every Friday.",
+                "Expense check: Flag categories above budget by 10%+.",
+                "Cashflow note: Confirm runway for next 8 weeks.",
+                "Action trigger: Cut, hold, or scale based on margin threshold.",
+            ],
+            "kpis": ["Monthly Revenue", "Net Margin", "Burn Rate", "Cash Runway (Weeks)", "Savings Rate"],
+        },
+        "Career": {
+            "buyer_goal": "position achievements for interviews and offers",
+            "quick_win": "rewrite your top 3 resume bullets using metrics today",
+            "scripts": [
+                "Resume bullet: Action + measurable result + business impact.",
+                "Cover line: Why this role, why now, why you.",
+                "Interview story: Situation, action, outcome, lesson.",
+                "Follow-up: Thank you + concise value recap + next-step ask.",
+            ],
+            "kpis": ["Applications Sent", "Callbacks", "Interviews", "Final Rounds", "Offers"],
+        },
+        "Freelance Ops": {
+            "buyer_goal": "reduce scope creep and improve payment reliability",
+            "quick_win": "send updated onboarding + scope doc to one active client",
+            "scripts": [
+                "Scope clause: Includes X deliverables and Y revision rounds.",
+                "Timeline clause: Delivery date assumes feedback in 48 hours.",
+                "Payment clause: 50% upfront, 50% before final handoff.",
+                "Boundary script: New request can be added as phase two.",
+            ],
+            "kpis": ["Project Margin", "Average Days To Pay", "Scope Creep Incidents", "Client NPS", "Referrals"],
+        },
+        "Wellness": {
+            "buyer_goal": "stick to a repeatable healthy routine",
+            "quick_win": "plan your next 3 days of meals/training in one pass",
+            "scripts": [
+                "Weekly plan: Anchor sessions first, then add support blocks.",
+                "Habit cue: Pair new habit with an existing routine.",
+                "Fallback plan: Minimum viable version for busy days.",
+                "Review note: Keep what worked, adjust one friction point.",
+            ],
+            "kpis": ["Planned Sessions", "Completed Sessions", "Streak Days", "Energy Score", "Prep Consistency"],
+        },
+        "Family": {
+            "buyer_goal": "run calmer household routines with clear expectations",
+            "quick_win": "fill this week’s schedule and post it in one visible place",
+            "scripts": [
+                "Routine prompt: Here is what happens before school and bedtime.",
+                "Reward rule: Points unlock specific rewards, not random treats.",
+                "Family check-in: What worked this week and what felt hard?",
+                "Reset line: Missed days are normal; restart at the next block.",
+            ],
+            "kpis": ["Routine Completion", "Task Completion", "Missed Tasks", "Family Stress Score", "Weekly Wins"],
+        },
+        "Events": {
+            "buyer_goal": "ship polished event assets without last-minute stress",
+            "quick_win": "customize names/date/style in the main template today",
+            "scripts": [
+                "Invite copy: Event details + tone + RSVP deadline in one screen.",
+                "Reminder text: Friendly nudge with clear date/time and link.",
+                "Vendor note: Confirm timeline, quantities, and setup windows.",
+                "Day-of checklist: Final print/export review before release.",
+            ],
+            "kpis": ["Assets Completed", "Revisions Needed", "On-Time Milestones", "Vendor Confirmations", "Guest Response Rate"],
+        },
+        "Hospitality": {
+            "buyer_goal": "deliver smoother guest experiences with fewer support requests",
+            "quick_win": "publish your welcome + check-in + checkout instructions now",
+            "scripts": [
+                "Welcome message: Key access info + quick essentials.",
+                "Issue response: Acknowledge issue, action ETA, follow-up plan.",
+                "Local recommendation: Top 3 picks by guest intent.",
+                "Checkout reminder: concise task list + appreciation note.",
+            ],
+            "kpis": ["Guest Questions", "Issue Resolution Time", "Review Rating", "Repeat Bookings", "Host Time Saved"],
+        },
+        "Branding": {
+            "buyer_goal": "present a consistent visual/message identity",
+            "quick_win": "apply your brand colors/fonts to one customer-facing asset",
+            "scripts": [
+                "Brand promise: We help [audience] achieve [outcome] without [pain].",
+                "Voice guideline: Keep copy clear, direct, and outcome-first.",
+                "CTA formula: Benefit + action + confidence statement.",
+                "Consistency rule: One headline style across all channels.",
+            ],
+            "kpis": ["Asset Consistency Score", "Content Output", "Engagement Rate", "Brand Recall", "Lead Conversion"],
+        },
+        "Real Estate": {
+            "buyer_goal": "convert property leads into qualified conversations",
+            "quick_win": "send the lead follow-up sequence to one new prospect",
+            "scripts": [
+                "Lead welcome: deliver value asset + clear next step.",
+                "Qualification prompt: budget, timeline, location priorities.",
+                "Follow-up cadence: day 0, day 2, day 5, day 8.",
+                "Consult close: offer two specific meeting options.",
+            ],
+            "kpis": ["New Leads", "Response Rate", "Consults Booked", "Showings", "Closed Deals"],
+        },
+    }
+    defaults = category_profiles.get(
+        category,
+        {
+            "buyer_goal": "implement a practical workflow that produces measurable outcomes",
+            "quick_win": "complete the first implementation pass today",
+            "scripts": [
+                "Outcome: Define success criteria before editing templates.",
+                "Implementation: Fill the template with your real business context.",
+                "Quality check: Validate output against the provided checklist.",
+                "Optimization: Improve one bottleneck each week.",
+            ],
+            "kpis": ["Output Volume", "Completion Rate", "Cycle Time", "Quality Score", "Buyer Satisfaction"],
+        },
+    )
+
+    plan_rows = []
+    for idx, row in enumerate(rows[:6], start=1):
+        step_name = row[0] if len(row) > 0 else f"Step {idx}"
+        action = row[1] if len(row) > 1 else "Execute the template workflow"
+        timing = row[2] if len(row) > 2 else "This week"
+        result = row[-1] if row else "Improved outcome"
+        plan_rows.append([f"Step {idx}", step_name, action, timing, result])
+
+    if not plan_rows:
+        for i, item in enumerate(included[:4], start=1):
+            plan_rows.append([f"Step {i}", item, f"Implement {item.lower()}", "This week", "Working first version"])
+    if not plan_rows:
+        plan_rows = [
+            ["Step 1", "Setup", "Configure your first deliverable", "Today", "Ready to use"],
+            ["Step 2", "Implementation", "Apply in your live workflow", "This week", "First real output"],
+            ["Step 3", "Optimization", "Refine based on feedback", "Week 2", "Higher quality results"],
+        ]
+
+    workbook_rows = []
+    for idx, row in enumerate(plan_rows, start=1):
+        workbook_rows.append(
+            [
+                f"W{idx:02d}",
+                row[2],
+                row[3],
+                "Not Started",
+                row[4],
+                "Pending",
+                "",
+            ]
+        )
+
+    quickstart_steps = [f"{row[1]}: {row[2]}" for row in plan_rows[:4]]
+    quickstart_steps.append(f"Run a full pass and compare results to: {preview.get('result', 'your target outcome')}")
+
+    kpi_rows = [[metric, "Baseline", "Target", "Week 1", "Week 2", "Week 3", "Week 4", "Notes"] for metric in defaults["kpis"]]
+    calendar_rows = []
+    for day in range(1, 31):
+        source = plan_rows[(day - 1) % len(plan_rows)]
+        calendar_rows.append([f"Day {day}", source[2], source[4], "Planned", ""])
+
+    return {
+        "buyer_goal": defaults["buyer_goal"],
+        "quick_win": defaults["quick_win"],
+        "scripts": defaults["scripts"],
+        "plan_rows": plan_rows,
+        "workbook_rows": workbook_rows,
+        "quickstart_steps": quickstart_steps,
+        "kpi_rows": kpi_rows,
+        "calendar_rows": calendar_rows,
+    }
+
+
 def _customer_pack_files(product: dict) -> list[tuple[str, str]]:
     preview = product.get("real_world_preview", {})
     title = product.get("title", "Digital Product")
-    price = f"${product.get('price_cents', 0) / 100:.2f}"
-    included = product.get("preview_items", [])
     category = product.get("category", "General")
-
-    category_artifacts = {
-        "Family": {
-            "columns": ["Week", "Focus", "Task", "Owner", "Status", "Notes"],
-            "rows": [
-                ["Week 1", "Daily routine", "Set morning schedule", "Parent", "Planned", ""],
-                ["Week 1", "Tracking", "Print tracker sheets", "Parent", "Planned", ""],
-                ["Week 2", "Consistency", "Run 5-day routine", "Family", "Planned", ""],
-            ],
-            "steps": [
-                "Define your weekly family objective.",
-                "Customize all schedule blocks with real times.",
-                "Print or duplicate one clean weekly tracker.",
-                "Run the plan for 5 days before editing.",
-                "Review what worked and adjust one variable at a time.",
-            ],
-        },
-        "Wellness": {
-            "columns": ["Day", "Habit/Workout", "Target", "Actual", "Status", "Adjustment"],
-            "rows": [
-                ["Mon", "Workout Session", "45 min", "", "Planned", ""],
-                ["Tue", "Hydration", "2.5L", "", "Planned", ""],
-                ["Wed", "Meal Prep", "3 meals", "", "Planned", ""],
-            ],
-            "steps": [
-                "Set one measurable weekly fitness/wellness target.",
-                "Customize daily targets for your schedule.",
-                "Track completion daily for 7 days.",
-                "Identify one bottleneck and simplify the plan.",
-                "Repeat with one progressive improvement.",
-            ],
-        },
-        "Finance": {
-            "columns": ["Category", "Budget", "Actual", "Variance", "Action", "Owner"],
-            "rows": [
-                ["Income", "6500", "", "", "Confirm expected inflows", "You"],
-                ["Housing", "1800", "", "", "Track weekly", "You"],
-                ["Food", "700", "", "", "Cap discretionary spend", "You"],
-                ["Savings", "900", "", "", "Auto-transfer", "You"],
-            ],
-            "steps": [
-                "Enter your true monthly baseline numbers.",
-                "Set budget caps for high-variance categories.",
-                "Track actuals weekly instead of month-end only.",
-                "Flag any variance above 10 percent.",
-                "Apply one corrective action immediately.",
-            ],
-        },
-        "Creator Growth": {
-            "columns": ["Content Asset", "Hook", "Core Value", "CTA", "Publish Date", "Status"],
-            "rows": [
-                ["Reel #1", "", "", "", "", "Planned"],
-                ["Reel #2", "", "", "", "", "Planned"],
-                ["Carousel #1", "", "", "", "", "Planned"],
-            ],
-            "steps": [
-                "Choose one audience pain point for this week.",
-                "Draft 3 hooks before writing body content.",
-                "Assign one CTA objective per post.",
-                "Schedule publishing dates and review cadence.",
-                "Measure retention and save rate after posting.",
-            ],
-        },
-        "Creator Business": {
-            "columns": ["Offer", "Audience", "Promise", "Price", "Launch Date", "Status"],
-            "rows": [
-                ["Core offer", "", "", "", "", "Draft"],
-                ["Upsell", "", "", "", "", "Draft"],
-                ["Email promo", "", "", "", "", "Draft"],
-            ],
-            "steps": [
-                "Define your core offer outcome in one sentence.",
-                "Set launch timeline and content milestones.",
-                "Draft customer-facing offer page language.",
-                "Map objection handling into email sequence.",
-                "Run launch review and optimize after week one.",
-            ],
-        },
-        "Ecommerce": {
-            "columns": ["Listing/Page", "Primary Keyword", "Benefit", "Proof", "CTA", "Status"],
-            "rows": [
-                ["Product 1", "", "", "", "", "Draft"],
-                ["Product 2", "", "", "", "", "Draft"],
-                ["Collection page", "", "", "", "", "Draft"],
-            ],
-            "steps": [
-                "Prioritize buyer intent keywords first.",
-                "Write benefit-led product sections.",
-                "Add trust proof and FAQ objections.",
-                "Finalize CTA and mobile readability check.",
-                "Publish and review conversion metrics weekly.",
-            ],
-        },
-        "Career": {
-            "columns": ["Target Role", "Evidence", "Resume Update", "Outreach", "Due Date", "Status"],
-            "rows": [
-                ["Role 1", "", "", "", "", "Planned"],
-                ["Role 2", "", "", "", "", "Planned"],
-                ["Role 3", "", "", "", "", "Planned"],
-            ],
-            "steps": [
-                "Select top 3 role targets.",
-                "Map measurable results for each role.",
-                "Tailor resume bullets to role outcomes.",
-                "Send strategic outreach with clear ask.",
-                "Track response rate and iterate weekly.",
-            ],
-        },
-        "Freelance Ops": {
-            "columns": ["Client", "Deliverable", "Deadline", "Owner", "Status", "Notes"],
-            "rows": [
-                ["Client A", "", "", "You", "Planned", ""],
-                ["Client B", "", "", "You", "Planned", ""],
-                ["Client C", "", "", "You", "Planned", ""],
-            ],
-            "steps": [
-                "Define scope and outcomes per client.",
-                "Set milestones and due dates up front.",
-                "Confirm approval/revision flow in writing.",
-                "Track delivery status weekly.",
-                "Run monthly client reporting and renewal prep.",
-            ],
-        },
-        "Operations": {
-            "columns": ["Process", "Owner", "Step", "SLA", "QA Check", "Status"],
-            "rows": [
-                ["Onboarding", "Ops", "Kickoff setup", "24h", "Checklist complete", "Draft"],
-                ["Delivery", "Ops", "Asset handoff", "48h", "QA pass", "Draft"],
-                ["Support", "Ops", "Issue resolution", "24h", "Customer confirmed", "Draft"],
-            ],
-            "steps": [
-                "Document process start/end conditions.",
-                "Assign clear owner per process stage.",
-                "Attach quality control checkpoints.",
-                "Set service-level time targets.",
-                "Review process performance monthly.",
-            ],
-        },
-        "Branding": {
-            "columns": ["Asset", "Guideline", "Primary Use", "Secondary Use", "Owner", "Status"],
-            "rows": [
-                ["Primary logo", "", "", "", "Brand Lead", "Draft"],
-                ["Color palette", "", "", "", "Brand Lead", "Draft"],
-                ["Typography", "", "", "", "Brand Lead", "Draft"],
-            ],
-            "steps": [
-                "Define brand positioning in one sentence.",
-                "Set visual standards for consistency.",
-                "Apply standards to 3 core channels.",
-                "Audit brand consistency monthly.",
-                "Refine messaging based on audience response.",
-            ],
-        },
-        "Real Estate": {
-            "columns": ["Lead/Listing", "Stage", "Action", "Date", "Owner", "Status"],
-            "rows": [
-                ["Lead 1", "New", "Initial contact", "", "Agent", "Planned"],
-                ["Lead 2", "Qualified", "Schedule consult", "", "Agent", "Planned"],
-                ["Lead 3", "Nurture", "Follow-up email", "", "Agent", "Planned"],
-            ],
-            "steps": [
-                "Capture lead details in one system.",
-                "Prioritize leads by readiness stage.",
-                "Run 48-hour follow-up consistently.",
-                "Track conversion by channel source.",
-                "Refine outreach based on response rate.",
-            ],
-        },
-        "Events": {
-            "columns": ["Milestone", "Task", "Owner", "Deadline", "Status", "Notes"],
-            "rows": [
-                ["Planning", "Finalize run-of-show", "Coordinator", "", "Planned", ""],
-                ["Vendors", "Confirm logistics", "Coordinator", "", "Planned", ""],
-                ["Execution", "Day-of checklist", "Team", "", "Planned", ""],
-            ],
-            "steps": [
-                "Define event objective and success criteria.",
-                "Lock timeline and owner per milestone.",
-                "Confirm all vendor dependencies.",
-                "Run final pre-event QA walkthrough.",
-                "Capture post-event lessons learned.",
-            ],
-        },
-        "Hospitality": {
-            "columns": ["Guest Stage", "Message/Task", "Owner", "SLA", "Status", "Notes"],
-            "rows": [
-                ["Pre-arrival", "Welcome message", "Host", "Same day", "Planned", ""],
-                ["Stay", "Issue response flow", "Host", "2h", "Planned", ""],
-                ["Checkout", "Review request", "Host", "24h", "Planned", ""],
-            ],
-            "steps": [
-                "Set guest communication standards.",
-                "Define response times by issue type.",
-                "Create repeatable turnover checklist.",
-                "Review guest feedback weekly.",
-                "Optimize operations for repeatability.",
-            ],
-        },
-    }
-    artifact = category_artifacts.get(
-        category,
-        {
-            "columns": ["Priority", "Action Item", "Owner", "Due Date", "Status", "Notes"],
-            "rows": [
-                ["High", "Define outcome", "You", "This week", "Planned", ""],
-                ["High", "Customize template", "You", "This week", "Planned", ""],
-                ["Medium", "Execute first version", "You", "Next week", "Planned", ""],
-            ],
-            "steps": [
-                "Define your desired outcome.",
-                "Customize the template files.",
-                "Run your first implementation pass.",
-                "Measure and optimize.",
-            ],
-        },
-    )
-    workflow_title = f"{title} Implementation Blueprint"
-    deliverable_focus = included[0] if included else f"{title} core deliverable"
-    title_rows: list[list[str]] = []
-    for idx, item in enumerate(included[:5], 1):
-        if len(cols := artifact["columns"]) >= 6:
-            title_rows.append(
-                [
-                    f"Phase {idx}",
-                    f"Build and customize {item}",
-                    "Buyer",
-                    f"Week {idx}",
-                    "Planned",
-                    f"Complete and review {item.lower()}",
-                ]
-            )
-        else:
-            title_rows.append(
-                [
-                    f"Phase {idx}",
-                    f"Build and customize {item}",
-                    "Buyer",
-                    f"Week {idx}",
-                    "Planned",
-                ]
-            )
-    if not title_rows:
-        if len(artifact["columns"]) >= 6:
-            title_rows = [
-                ["Phase 1", f"Customize {deliverable_focus}", "Buyer", "Week 1", "Planned", "First draft complete"],
-                ["Phase 2", "Run first implementation", "Buyer", "Week 2", "Planned", "Live test complete"],
-                ["Phase 3", "Optimize based on results", "Buyer", "Week 3", "Planned", "Improved version complete"],
-            ]
-        else:
-            title_rows = [
-                ["Phase 1", f"Customize {deliverable_focus}", "Buyer", "Week 1", "Planned"],
-                ["Phase 2", "Run first implementation", "Buyer", "Week 2", "Planned"],
-                ["Phase 3", "Optimize based on results", "Buyer", "Week 3", "Planned"],
-            ]
+    included = product.get("preview_items", [])
+    price = f"${product.get('price_cents', 0) / 100:.2f}"
     safe_title = html.escape(title)
-    safe_category = html.escape(product.get("category", "General"))
+    safe_category = html.escape(category)
     safe_tagline = html.escape(product.get("tagline", ""))
     safe_description = html.escape(product.get("description", ""))
     safe_snippet = html.escape(product.get("preview_snippet", ""))
+    profile = _product_content_profile(product)
 
     style = """
 <style>
 body{margin:0;background:#f4f7ff;color:#0f172a;font-family:Manrope,Segoe UI,sans-serif}
-.wrap{max-width:880px;margin:0 auto;padding:28px 18px}
+.wrap{max-width:940px;margin:0 auto;padding:28px 18px}
 .card{background:#fff;border:1px solid #dbe3f0;border-radius:16px;padding:22px;box-shadow:0 10px 28px rgba(15,23,42,.08)}
 h1,h2,h3{font-family:Sora,Manrope,sans-serif;letter-spacing:-.02em;margin:0 0 10px}
 p{line-height:1.6;margin:0 0 10px;color:#334155}
@@ -1143,278 +1135,188 @@ p{line-height:1.6;margin:0 0 10px;color:#334155}
 ul{margin:0;padding-left:18px}
 li{margin:6px 0;line-height:1.5}
 table{width:100%;border-collapse:collapse;font-size:14px;background:#fff}
-th,td{padding:10px;border:1px solid #e4ecfb;text-align:left}
+th,td{padding:10px;border:1px solid #e4ecfb;text-align:left;vertical-align:top}
 th{background:#f7faff;color:#1e3a5f}
-.kicker{font-size:13px;font-weight:800;color:#31568a;text-transform:uppercase;letter-spacing:.05em}
 .cta{margin-top:14px;padding:14px;border:1px solid #d4e3ff;background:#f2f7ff;border-radius:12px;color:#1e3a8a;font-weight:700}
 </style>
 """
 
     included_html = "".join(f"<li>{html.escape(item)}</li>" for item in included)
-    rows = title_rows
-    customer_columns = ["Step", "What To Do", "When", "Expected Result"]
-    customer_rows: list[list[str]] = []
-    for idx, row in enumerate(rows, 1):
-        action = str(row[1]) if len(row) > 1 else "Complete the next implementation task"
-        when = str(row[3]) if len(row) > 3 else f"Day {idx * 2}"
-        result = str(row[5]) if len(row) > 5 else (str(row[4]) if len(row) > 4 else "Task completed")
-        if not when or when == "YYYY-MM-DD":
-            when = f"Day {idx * 2}"
-        customer_rows.append([f"Step {idx}", action, when, result])
-    header_html = "".join(f"<th>{html.escape(str(c))}</th>" for c in customer_columns)
-    row_html = "".join(
-        "<tr>" + "".join(f"<td>{html.escape(str(cell))}</td>" for cell in row) + "</tr>"
-        for row in customer_rows
+    plan_rows_html = "".join(
+        "<tr>"
+        + "".join(f"<td>{html.escape(str(v))}</td>" for v in row)
+        + "</tr>"
+        for row in profile["plan_rows"]
+    )
+    step_list_html = "".join(f"<li>{html.escape(step)}</li>" for step in profile["quickstart_steps"])
+    script_lines = [f"- {line}" for line in profile["scripts"]]
+
+    readme_txt = "\n".join(
+        [
+            f"{title} - Buyer Delivery Pack",
+            "",
+            "START HERE",
+            "1) Open 01_Start_Here.html",
+            "2) Fill 02_Quickstart_Action_Plan.csv and 03_Master_Workbook.csv",
+            "3) Use 04_Copy_Paste_Scripts.txt and 05_Performance_Tracker.csv in your workflow",
+            "4) Follow 06_30_Day_Execution_Calendar.csv for execution cadence",
+            "",
+            "This package is built for immediate real-world implementation.",
+        ]
     )
 
     start_here_html = f"""<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">{style}</head><body>
 <div class="wrap"><section class="card">
 <div class="meta">{safe_category}</div>
 <h1>{safe_title}</h1>
-<p class="kicker">Welcome to your premium digital product</p>
-<p>Thank you for your purchase from Northstar Studio. This package is ready to use immediately.</p>
-<h3>What you received</h3>
-<ul>{included_html}</ul>
-<div class="cta">Open <strong>02_Product_Guide.html</strong> first, then complete <strong>03_Implementation_Workbook.csv</strong>.</div>
-<p><strong>Price:</strong> {price}</p>
-</section></div></body></html>"""
-
-    guide_html = f"""<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">{style}</head><body>
-<div class="wrap"><section class="card">
-<div class="meta">{safe_category}</div>
-<h1>{safe_title} Guide</h1>
 <p><strong>{safe_tagline}</strong></p>
 <p>{safe_description}</p>
-<h3>How to implement</h3>
-<p>{safe_snippet}</p>
-<h3>{html.escape(workflow_title)}</h3>
-<p>Use this exact execution sequence to take {safe_title} from setup to completed deliverable.</p>
-<table><thead><tr>{header_html}</tr></thead><tbody>{row_html}</tbody></table>
-<div class="cta">{html.escape(preview.get("result", f"Outcome: {title} is fully implemented with measurable progress."))}</div>
+<h3>What you get</h3>
+<ul>{included_html}</ul>
+<h3>Fast Start Checklist</h3>
+<ul>{step_list_html}</ul>
+<div class="cta">Quick win: {html.escape(profile["quick_win"])}</div>
+<p><strong>Buyer goal:</strong> {html.escape(profile["buyer_goal"])}</p>
+<p><strong>Price paid:</strong> {price}</p>
 </section></div></body></html>"""
 
-    checklist_items = [
-        f"Define the success outcome for {title}.",
-        f"Customize {deliverable_focus} with your own details.",
-        "Complete the first full execution pass this week.",
-        "Review results and improve the next version.",
-    ]
-    checklist_items.extend(artifact["steps"])
-    for item in included[:5]:
-        checklist_items.append(f"Set up and complete: {item}.")
-    checklist_rows = "".join(
-        f'<label style="display:flex;align-items:flex-start;gap:10px;margin:8px 0;"><input type="checkbox" style="margin-top:4px;transform:scale(1.2)"><span>{html.escape(step)}</span></label>'
-        for step in checklist_items
-    )
-
-    checklist_html = """<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">""" + style + """</head><body>
+    playbook_html = f"""<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">{style}</head><body>
 <div class="wrap"><section class="card">
-<h1>Quickstart Checklist</h1>
-""" + checklist_rows + """
-<div class="cta">Tip: complete one high-impact section first, then iterate weekly.</div>
+<div class="meta">{safe_category}</div>
+<h1>{safe_title} - Implementation Playbook</h1>
+<p>{safe_snippet}</p>
+<h3>Execution plan</h3>
+<table>
+<thead><tr><th>Step</th><th>Deliverable</th><th>Action</th><th>Timeline</th><th>Expected outcome</th></tr></thead>
+<tbody>{plan_rows_html}</tbody>
+</table>
+<h3>Pro scripts</h3>
+<ul>{"".join(f"<li>{html.escape(line)}</li>" for line in profile["scripts"])}</ul>
+<div class="cta">{html.escape(preview.get("result", "Outcome: implement this pack in your workflow and track performance weekly."))}</div>
+</section></div></body></html>"""
+
+    setup_html = f"""<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">{style}</head><body>
+<div class="wrap"><section class="card">
+<h1>90-Minute Setup Sprint</h1>
+<p>Block 90 minutes and execute this setup flow in order.</p>
+<table>
+<thead><tr><th>Time Block</th><th>Task</th><th>Output</th></tr></thead>
+<tbody>
+<tr><td>0-20 min</td><td>Customize core template fields</td><td>First draft completed</td></tr>
+<tr><td>20-45 min</td><td>Apply scripts/checklists to your context</td><td>Ready-to-use workflow</td></tr>
+<tr><td>45-70 min</td><td>Run one real-world use case</td><td>Validated output</td></tr>
+<tr><td>70-90 min</td><td>Set KPIs + 30-day cadence</td><td>Tracking + accountability</td></tr>
+</tbody>
+</table>
+<div class="cta">Do not optimize before your first full implementation pass.</div>
 </section></div></body></html>"""
 
     license_html = """<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">""" + style + """</head><body>
 <div class="wrap"><section class="card">
-<h1>License & Guarantee</h1>
-<h3>License</h3>
-<p>Single buyer use unless otherwise stated in writing. Redistribution, resale, or sublicensing is not allowed.</p>
-<h3>7-day satisfaction guarantee</h3>
-<p>One store-credit request per payment. Credit equals the original purchase amount and can be applied to another product.</p>
-<p>Contact support by replying to your purchase email within 7 days.</p>
+<h1>License + 7-Day Satisfaction Guarantee</h1>
+<p>License: one buyer, internal business/household use, no redistribution or resale.</p>
+<p>Satisfaction guarantee: one store-credit request per payment within 7 days of purchase, redeemable toward another Northstar Studio product.</p>
 </section></div></body></html>"""
 
-    csv_headers = ["Step", "Action Item", "Target Date", "Complete", "Your Notes"]
-    csv_lines = [",".join(csv_headers)]
-    for idx, row in enumerate(customer_rows, 1):
-        milestone = str(row[0]) if len(row) > 0 else f"Step {idx}"
-        action = str(row[1]) if len(row) > 1 else "Implementation step"
-        due = str(row[2]) if len(row) > 2 else f"Day {idx * 2}"
-        if not due or due == "YYYY-MM-DD":
-            due = f"Day {idx * 2}"
-        note = str(row[3]) if len(row) > 3 else ""
-        csv_lines.append(
-            ",".join(
-                x.replace(",", ";")
-                for x in [milestone, action, due, "No", note]
-            )
-        )
-
-    sample_headers = ["Step", "Example", "Expected Result"]
-    sample_rows = preview.get("rows") or [
-        ["Step 1", "Set up your first template instance", "Ready to use"],
-        ["Step 2", "Customize with your details", "Draft completed"],
-        ["Step 3", "Run and refine", "Production-ready result"],
-    ]
-    sample_lines = [",".join(h.replace(",", ";") for h in sample_headers)]
-    for row in sample_rows:
-        sample_lines.append(",".join(str(c).replace(",", ";") for c in row))
-
-    asset_slug = slugify(title)
-    master_headers = sample_headers + ["Customization Notes", "Final Version"]
-    master_lines = [",".join(h.replace(",", ";") for h in master_headers)]
-    for row in sample_rows:
-        row_vals = [str(c) for c in row]
-        while len(row_vals) < len(sample_headers):
-            row_vals.append("")
-        row_vals.extend(["", ""])
-        master_lines.append(",".join(c.replace(",", ";") for c in row_vals))
-    master_lines.extend(
-        [
-            ",".join(["", "", "", "", ""]),
-            ",".join(["", "", "", "", ""]),
-        ]
+    quickstart_csv = _csv_block(
+        ["Task ID", "Action", "Due", "Status", "Output", "Notes"],
+        [[f"Q{idx+1:02d}", row[2], row[3], "Planned", row[4], ""] for idx, row in enumerate(profile["plan_rows"][:5])],
+    )
+    workbook_csv = _csv_block(
+        ["Workstream ID", "Workstream", "Due", "Status", "Definition of done", "Reviewer", "Notes"],
+        profile["workbook_rows"],
+    )
+    tracker_csv = _csv_block(
+        ["Metric", "Baseline", "Target", "Week 1", "Week 2", "Week 3", "Week 4", "Notes"],
+        profile["kpi_rows"],
+    )
+    calendar_csv = _csv_block(
+        ["Day", "Primary Task", "Expected Result", "Status", "Notes"],
+        profile["calendar_rows"],
     )
 
-    plan_lines = ["Day,Primary Task,Deliverable,Success Check,Status"]
-    tasks = included[:] if included else ["Setup core template", "Customize content", "Run first implementation"]
-    for day in range(1, 15):
-        task = tasks[(day - 1) % len(tasks)]
-        deliverable = f"{task} complete"
-        success = "Ready for next phase"
-        status = "Planned" if day > 1 else "Start today"
-        plan_lines.append(f"Day {day},{task},{deliverable},{success},{status}")
+    sample_rows = preview.get("rows") or [row[1:] for row in profile["plan_rows"][:4]]
+    sample_headers = preview.get("columns") or ["Deliverable", "Action", "Expected Result"]
+    sample_csv_rows = [[str(c) for c in row[: len(sample_headers)]] for row in sample_rows]
+    sample_csv = _csv_block(sample_headers, sample_csv_rows)
 
-    blocks = [
-        f"{title} - Copy/Paste Blocks",
-        "",
-        "Core positioning line:",
-        product.get("tagline", ""),
-        "",
-        "Primary implementation narrative:",
-        product.get("preview_snippet", ""),
-        "",
-        "Included deliverable checklist:",
-    ]
-    for item in included:
-        blocks.append(f"- {item}")
-    blocks.extend(
+    scripts_txt = "\n".join(
         [
+            f"{title} - Copy/Paste Script Library",
             "",
-            "Customer-facing benefit statement:",
-            f"This {category.lower()} system is designed to save time and improve real outcomes within the first week of use.",
+            "Use these scripts directly and customize bracketed fields:",
+            "",
+            *script_lines,
+            "",
+            "Customer support response:",
+            "- Thanks for your purchase. Start with 01_Start_Here.html and complete the quickstart file first.",
+            "- If you want a faster outcome, focus on one use case this week and track it in 05_Performance_Tracker.csv.",
         ]
     )
 
     workspace_rows = "".join(
-        f"<tr><td>{html.escape(str(r[0]))}</td><td contenteditable='true'>{html.escape(str(r[1]))}</td>"
-        f"<td contenteditable='true'>{html.escape(str(r[2]))}</td><td contenteditable='true'>{html.escape(str(r[3]))}</td></tr>"
-        for r in customer_rows
+        f"<tr><td>{html.escape(row[0])}</td><td contenteditable='true'>{html.escape(row[2])}</td>"
+        f"<td contenteditable='true'>{html.escape(row[3])}</td><td contenteditable='true'>{html.escape(row[4])}</td></tr>"
+        for row in profile["plan_rows"]
     )
-    included_list = "".join(f"<li>{html.escape(i)}</li>" for i in included)
-    workspace_html = f"""<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<style>
-body{{margin:0;background:#f3f7ff;color:#0f172a;font-family:Manrope,Segoe UI,sans-serif}}
-.wrap{{max-width:980px;margin:0 auto;padding:24px 16px}}
-.card{{background:#fff;border:1px solid #dbe3f0;border-radius:14px;padding:18px;box-shadow:0 10px 24px rgba(15,23,42,.08);margin-bottom:12px}}
-h1,h2{{font-family:Sora,Manrope,sans-serif;margin:0 0 10px}}
-p{{margin:0 0 10px;line-height:1.6;color:#334155}}
-table{{width:100%;border-collapse:collapse;background:#fff}}
-th,td{{border:1px solid #e3ebfa;padding:10px;text-align:left;vertical-align:top}}
-th{{background:#f7faff;color:#1f3c66}}
-td[contenteditable="true"]{{background:#fcfdff}}
-.row{{display:flex;gap:8px;flex-wrap:wrap}}
-button{{border:1px solid #dbe3f0;background:#fff;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer}}
-button.primary{{background:#1e4ed8;border-color:#1e4ed8;color:#fff}}
-.meta{{display:inline-block;padding:5px 10px;border-radius:999px;background:#eef3ff;border:1px solid #d1deff;color:#1d4fb0;font-weight:700;font-size:13px}}
-</style></head><body>
-<div class="wrap">
-<section class="card">
-<span class="meta">{safe_category}</span>
-<h1>{safe_title} Workspace</h1>
-<p><strong>{safe_tagline}</strong></p>
-<p>{safe_description}</p>
-<h2>Included Deliverables</h2>
-<ul>{included_list}</ul>
-</section>
-<section class="card">
-<h2>Implementation Planner (Editable)</h2>
-<p>Click any cell to edit. Use the buttons below to save and export your progress.</p>
-<table id="planner">
-<thead><tr><th>Step</th><th>What To Do</th><th>When</th><th>Expected Result</th></tr></thead>
-<tbody>{workspace_rows}</tbody>
-</table>
-<div class="row" style="margin-top:12px">
-<button class="primary" onclick="savePlan()">Save Progress</button>
+    workspace_html = f"""<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">{style}</head><body>
+<div class="wrap"><section class="card"><div class="meta">{safe_category}</div><h1>{safe_title} Interactive Builder</h1>
+<p>Edit any cell, add rows, and export your customized plan as CSV.</p>
+<table id="planner"><thead><tr><th>Step</th><th>Action</th><th>Due</th><th>Expected Result</th></tr></thead><tbody>{workspace_rows}</tbody></table>
+<div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+<button onclick="addRow()">Add Row</button>
+<button onclick="savePlan()">Save Local</button>
 <button onclick="loadPlan()">Load Saved</button>
-<button onclick="addRow()">Add Step</button>
 <button onclick="exportCsv()">Export CSV</button>
 </div>
-</section>
-<section class="card">
-<h2>Action Prompt</h2>
-<p>{safe_snippet}</p>
-</section>
-</div>
+</section></div>
 <script>
-const KEY = "northstar_workspace_{slugify(title)}";
-function tableData() {{
-  const rows = [...document.querySelectorAll("#planner tbody tr")];
-  return rows.map(r => [...r.children].map(c => c.innerText.trim()));
-}}
-function renderRows(data) {{
-  const tbody = document.querySelector("#planner tbody");
-  tbody.innerHTML = "";
-  data.forEach((row, idx) => {{
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${{row[0] || `Step ${{idx+1}}`}}</td><td contenteditable="true">${{row[1] || ""}}</td><td contenteditable="true">${{row[2] || ""}}</td><td contenteditable="true">${{row[3] || ""}}</td>`;
-    tbody.appendChild(tr);
-  }});
-}}
-function savePlan() {{
-  localStorage.setItem(KEY, JSON.stringify(tableData()));
-  alert("Saved.");
-}}
-function loadPlan() {{
-  const raw = localStorage.getItem(KEY);
-  if (!raw) return alert("No saved plan found.");
-  renderRows(JSON.parse(raw));
+function toRows() {{
+  return [...document.querySelectorAll("#planner tbody tr")].map(r => [...r.children].map(c => c.innerText.trim()));
 }}
 function addRow() {{
-  const data = tableData();
-  data.push([`Step ${{data.length + 1}}`, "", "", ""]);
-  renderRows(data);
+  const tr=document.createElement("tr");
+  tr.innerHTML="<td contenteditable='true'>New Step</td><td contenteditable='true'>Add action</td><td contenteditable='true'>This week</td><td contenteditable='true'>Expected result</td>";
+  document.querySelector("#planner tbody").appendChild(tr);
+}}
+function savePlan() {{
+  localStorage.setItem("northstar-plan", JSON.stringify(toRows()));
+  alert("Saved in this browser.");
+}}
+function loadPlan() {{
+  const raw=localStorage.getItem("northstar-plan");
+  if(!raw) return;
+  const rows=JSON.parse(raw);
+  const body=document.querySelector("#planner tbody");
+  body.innerHTML="";
+  rows.forEach(row => {{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td contenteditable='true'>${{row[0]||""}}</td><td contenteditable='true'>${{row[1]||""}}</td><td contenteditable='true'>${{row[2]||""}}</td><td contenteditable='true'>${{row[3]||""}}</td>`;
+    body.appendChild(tr);
+  }});
 }}
 function exportCsv() {{
-  const rows = [["Step","What To Do","When","Expected Result"], ...tableData()];
-  const csv = rows.map(r => r.map(v => `"${{String(v).replaceAll('"','""')}}"`).join(",")).join("\\n");
-  const blob = new Blob([csv], {{type:"text/csv;charset=utf-8;"}});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "implementation-planner.csv";
-  a.click();
-  URL.revokeObjectURL(a.href);
+  const headers=["Step","Action","Due","Expected Result"];
+  const rows=[headers,...toRows()];
+  const csv=rows.map(r=>r.map(v=>`"${{String(v).replaceAll('"','""')}}"`).join(",")).join("\\n");
+  const blob=new Blob([csv],{{type:"text/csv;charset=utf-8;"}});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="interactive-builder.csv"; a.click();
 }}
-</script>
-</body></html>"""
-
-    example_items = "".join(
-        f"<li><strong>{html.escape(item)}</strong>: ready-to-customize section included.</li>"
-        for item in included
-    )
-    filled_example_html = f"""<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">{style}</head><body>
-<div class="wrap"><section class="card">
-<div class="meta">{safe_category}</div>
-<h1>{safe_title} Filled Example</h1>
-<p>This is a completed example showing one realistic way to use your purchased product.</p>
-<h3>Completed Structure</h3>
-<ul>{example_items}</ul>
-<h3>Implementation Outcome</h3>
-<p>{html.escape(preview.get("result", "Completed example demonstrates practical execution."))}</p>
-</section></div></body></html>"""
+</script></body></html>"""
 
     return [
+        ("00_READ_FIRST.txt", readme_txt),
         ("01_Start_Here.html", start_here_html),
-        ("02_Product_Guide.html", guide_html),
-        ("03_Implementation_Workbook.csv", "\n".join(csv_lines)),
-        ("04_Quickstart_Checklist.html", checklist_html),
-        ("05_License_and_Guarantee.html", license_html),
-        ("06_Completed_Example.csv", "\n".join(sample_lines)),
-        (f"07_{asset_slug}_Master_Template.csv", "\n".join(master_lines)),
-        ("08_14_Day_Execution_Plan.csv", "\n".join(plan_lines)),
-        ("09_Copy_Paste_Blocks.txt", "\n".join(blocks)),
-        ("10_Interactive_Workspace.html", workspace_html),
-        ("11_Filled_Example.html", filled_example_html),
+        ("02_Quickstart_Action_Plan.csv", quickstart_csv),
+        ("03_Master_Workbook.csv", workbook_csv),
+        ("04_Copy_Paste_Scripts.txt", scripts_txt),
+        ("05_Performance_Tracker.csv", tracker_csv),
+        ("06_30_Day_Execution_Calendar.csv", calendar_csv),
+        ("07_Implementation_Playbook.html", playbook_html),
+        ("08_Filled_Example.csv", sample_csv),
+        ("09_90_Minute_Setup_Sprint.html", setup_html),
+        ("10_Interactive_Builder.html", workspace_html),
+        ("11_License_and_Guarantee.html", license_html),
     ]
 
 
@@ -1449,81 +1351,21 @@ def build_customer_bundle_pack(bundle: dict) -> bytes:
 
 
 def build_product_qc_zip(product: dict) -> bytes:
-    preview = product.get("real_world_preview", {})
     title = product.get("title", "Untitled Product")
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
-        summary_lines = [
-            f"Product: {title}",
-            f"Category: {product.get('category', 'General')}",
-            f"Price: ${product.get('price_cents', 0) / 100:.2f}",
-            "",
-            "Tagline:",
-            product.get("tagline", ""),
-            "",
-            "Description:",
-            product.get("description", ""),
-            "",
-            "Included:",
-        ]
-        for item in product.get("preview_items", []):
-            summary_lines.append(f"- {item}")
-        summary_lines.extend(
-            [
-                "",
-                "How Buyers Use It:",
-                product.get("preview_snippet", ""),
-                "",
-                "Satisfaction policy:",
-                "7-day satisfaction guarantee with one store-credit request per payment.",
-            ]
-        )
-        zf.writestr("README.txt", "\n".join(summary_lines))
-        zf.writestr("product.json", json.dumps(product, indent=2))
-
-        artifact_lines = [
-            preview.get("headline", "Sample Deliverable"),
-            preview.get("subhead", ""),
-            "",
-            "Columns:",
-            ", ".join(preview.get("columns", [])),
-            "",
-            "Rows:",
-        ]
-        for row in preview.get("rows", []):
-            artifact_lines.append(" | ".join(str(c) for c in row))
-        artifact_lines.extend(["", "Outcome:", preview.get("result", "")])
-        zf.writestr("sample_artifact.txt", "\n".join(artifact_lines))
-
-        csv_rows = [preview.get("columns", [])] + preview.get("rows", [])
-        csv_text = "\n".join(",".join(str(c).replace(",", ";") for c in row) for row in csv_rows if row)
-        zf.writestr("sample_artifact.csv", csv_text)
-
-        sales_page = [
-            f"# {title}",
-            "",
-            f"**Category:** {product.get('category', 'General')}",
-            f"**Price:** ${product.get('price_cents', 0) / 100:.2f}",
-            "",
-            f"## {product.get('tagline', '')}",
-            "",
-            product.get("description", ""),
-            "",
-            "## Included",
-        ]
-        for item in product.get("preview_items", []):
-            sales_page.append(f"- {item}")
-        sales_page.extend(
-            [
-                "",
-                "## Real-World Buyer Outcome",
-                preview.get("result", ""),
-                "",
-                "## Guarantee",
-                "7-day satisfaction guarantee. One store-credit request per payment.",
-            ]
-        )
-        zf.writestr("sales_page.md", "\n".join(sales_page))
+        qc_meta = {
+            "title": title,
+            "category": product.get("category", "General"),
+            "price_cents": product.get("price_cents", 0),
+            "tagline": product.get("tagline", ""),
+            "description": product.get("description", ""),
+            "included": product.get("preview_items", []),
+            "preview": product.get("real_world_preview", {}),
+        }
+        zf.writestr("00_qc_metadata.json", json.dumps(qc_meta, indent=2))
+        for file_name, content in _customer_pack_files(product):
+            zf.writestr(file_name, content)
     return buf.getvalue()
 
 
@@ -2923,8 +2765,8 @@ def dynamic_cover() -> Response:
     safe_category = html.escape(category[:40])
     safe_lines = [html.escape(line[:40]) for line in lines]
 
-    line_y_start = 278
-    line_gap = 78
+    line_y_start = 280
+    line_gap = 74
     line_markup = "".join(
         f'<text x="84" y="{line_y_start + idx * line_gap}" fill="#ffffff" '
         f'font-size="58" font-family="Sora, Arial, sans-serif" font-weight="800">{line}</text>'
@@ -2950,10 +2792,11 @@ def dynamic_cover() -> Response:
 <text x="116" y="109" fill="#ffffff" font-size="34" font-family="Sora, Arial, sans-serif" font-weight="700">Northstar Studio</text>
 <text x="84" y="178" fill="rgba(255,255,255,0.92)" font-size="38" font-family="Manrope, Arial, sans-serif">{safe_category}</text>
 {line_markup}
-<rect x="84" y="472" width="1032" height="2" fill="rgba(255,255,255,0.3)"/>
-<rect x="84" y="516" width="316" height="94" rx="14" fill="url(#glass)" stroke="rgba(255,255,255,0.25)" />
-<text x="108" y="555" fill="#ffffff" font-size="29" font-family="Sora, Arial, sans-serif" font-weight="700">Instant Download</text>
-<text x="108" y="586" fill="rgba(255,255,255,0.92)" font-size="21" font-family="Manrope, Arial, sans-serif">Editable premium files</text>
+<rect x="84" y="478" width="1032" height="2" fill="rgba(255,255,255,0.28)"/>
+<rect x="84" y="520" width="250" height="44" rx="22" fill="rgba(255,255,255,0.16)" stroke="rgba(255,255,255,0.28)" />
+<text x="112" y="549" fill="#ffffff" font-size="24" font-family="Sora, Arial, sans-serif" font-weight="700">Instant Download</text>
+<rect x="348" y="520" width="220" height="44" rx="22" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.20)" />
+<text x="375" y="549" fill="rgba(255,255,255,0.95)" font-size="22" font-family="Manrope, Arial, sans-serif" font-weight="700">Editable Files</text>
 </svg>"""
     return Response(svg, mimetype="image/svg+xml")
 
