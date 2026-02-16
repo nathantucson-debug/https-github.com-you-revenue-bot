@@ -2990,7 +2990,8 @@ def customer_download_product(product_id: str):
     if not product:
         return jsonify({"error": "product not found"}), 404
     package = build_customer_product_pack(product)
-    filename = f"{slugify(product['title'])}-northstar-studio.zip"
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    filename = f"{slugify(product['title'])}-northstar-studio-{stamp}.zip"
     return Response(
         package,
         mimetype="application/zip",
@@ -3008,7 +3009,8 @@ def customer_download_bundle(bundle_key: str):
     if not bundle:
         return jsonify({"error": "bundle not found"}), 404
     package = build_customer_bundle_pack(bundle)
-    filename = f"{slugify(bundle['title'])}-northstar-studio-bundle.zip"
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    filename = f"{slugify(bundle['title'])}-northstar-studio-bundle-{stamp}.zip"
     return Response(
         package,
         mimetype="application/zip",
@@ -3024,7 +3026,8 @@ def admin_download_product_zip(product_id: str):
     if not product:
         return jsonify({"error": "product not found"}), 404
     payload = build_customer_product_pack(product)
-    filename = f"{slugify(product.get('title', 'product'))}-retail-pack.zip"
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    filename = f"{slugify(product.get('title', 'product'))}-retail-pack-{stamp}.zip"
     return Response(
         payload,
         mimetype="application/zip",
@@ -3052,7 +3055,8 @@ def admin_download_all_qc_zip():
             + (f"Category filter: {selected_category}\n" if selected_category else ""),
         )
     suffix = f"-{slugify(selected_category)}" if selected_category else ""
-    filename = f"northstar-studio-all-qc{suffix}.zip"
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+    filename = f"northstar-studio-all-qc{suffix}-{stamp}.zip"
     return Response(
         buf.getvalue(),
         mimetype="application/zip",
