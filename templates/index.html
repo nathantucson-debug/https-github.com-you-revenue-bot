@@ -115,6 +115,15 @@
           <button class="btn primary" type="button" onclick="runAiTeamReport()">Run AI Team</button>
           <button class="btn" type="button" onclick="runAiTeamReport(true)">Show Failed Only</button>
         </div>
+        <form class="actions" action="/admin/ai-team/autofix" method="POST">
+          <input type="hidden" name="admin_token" value="{{ admin_token_hint }}">
+          <input type="hidden" name="redirect" value="1">
+          <input id="ai-occupation-form" class="input" type="text" name="occupation" value="small business owner" placeholder="Occupation for autofix">
+          <input class="input" type="number" name="limit" value="50" min="1" max="200" step="1">
+          <input class="input" type="number" name="min_score" value="80" min="1" max="100" step="1">
+          <input class="input" type="number" name="max_updates" value="20" min="1" max="200" step="1">
+          <button class="btn primary" type="submit">Auto-Fix Failed Products</button>
+        </form>
         <div id="ai-status" class="status-line">Ready.</div>
         <pre id="ai-report" class="report">Run the AI Team to see guidance.</pre>
       </section>
@@ -372,6 +381,8 @@
   <script>
     async function runAiTeamReport(failedOnly = false) {
       const occupation = document.getElementById("ai-occupation").value.trim() || "small business owner";
+      const occForm = document.getElementById("ai-occupation-form");
+      if (occForm) occForm.value = occupation;
       const limit = document.getElementById("ai-limit").value || "50";
       const status = document.getElementById("ai-status");
       const out = document.getElementById("ai-report");

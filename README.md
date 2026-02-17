@@ -208,3 +208,5 @@ Option B: Manual token:
   - `GET /admin/test-agent/all?occupation=<job title>&limit=50&admin_token=<ADMIN_TOKEN>`
 - AI Team strategic report (admin token required):
   - `GET /admin/ai-team/report?occupation=<job title>&limit=50&admin_token=<ADMIN_TOKEN>`
+- AI Team auto-fix (admin token required):
+  - `POST /admin/ai-team/autofix` with `occupation`, `limit`, `min_score`, `max_updates`, `admin_token`

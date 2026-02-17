@@ -780,6 +780,16 @@ def db() -> sqlite3.Connection:
 
 def enrich_product(product: dict) -> dict:
     details = CATALOG_BY_TITLE.get(product.get("title", ""), {})
+    override = get_content_override(product.get("title", ""))
+    if override:
+        details = {
+            **details,
+            "category": override.get("category") or details.get("category", "General"),
+            "tagline": override.get("tagline") or details.get("tagline", ""),
+            "description": override.get("description") or details.get("description", ""),
+            "preview_items": override.get("preview_items") or details.get("preview_items", []),
+            "preview_snippet": override.get("preview_snippet") or details.get("preview_snippet", ""),
+        }
     category = details.get("category", "General")
     theme_start, theme_end = CATEGORY_THEME.get(category, ("#2563eb", "#1d4ed8"))
     product["category"] = category
@@ -2198,6 +2208,108 @@ def build_ai_team_report(occupation: str, limit: int = 50) -> dict:
     }
 
 
+def _occupation_language_pack(occupation: str) -> dict:
+    o = (occupation or "").strip()
+    ol = o.lower()
+    if "fitness" in ol or "coach" in ol:
+        return {
+            "audience": "fitness coaches and wellness professionals",
+            "value_theme": "client results, adherence, and clear implementation",
+            "benefit_line": "get buyer-ready tools that improve consistency and outcomes this week",
+        }
+    if "freelance" in ol:
+        return {
+            "audience": "freelancers and solo service operators",
+            "value_theme": "scope clarity, smoother delivery, and faster payment cycles",
+            "benefit_line": "ship client work with less back-and-forth and better margins",
+        }
+    if "realtor" in ol or "real estate" in ol:
+        return {
+            "audience": "real estate agents and lead-focused teams",
+            "value_theme": "lead conversion, follow-up consistency, and trust",
+            "benefit_line": "convert more leads into booked consults and closed deals",
+        }
+    if "creator" in ol:
+        return {
+            "audience": "content creators building monetized audiences",
+            "value_theme": "production speed, conversion clarity, and repeatability",
+            "benefit_line": "publish faster and turn attention into sales-ready demand",
+        }
+    return {
+        "audience": f"{o} buyers" if o else "small business buyers",
+        "value_theme": "immediate practical value and buyer confidence",
+        "benefit_line": "use clear, professional templates to create real outcomes quickly",
+    }
+
+
+def _autofix_content_for_product(product: dict, occupation: str) -> dict:
+    lang = _occupation_language_pack(occupation)
+    title = product.get("title", "Digital Product")
+    category = product.get("category", "General")
+    base_items = product.get("preview_items", [])
+    while len(base_items) < 3:
+        base_items.append(f"{title} core template component {len(base_items) + 1}")
+    preview_items = [
+        f"{base_items[0]} (fully editable + buyer-ready example)",
+        f"{base_items[1]} (guided implementation version)",
+        f"{base_items[2]} (execution checklist + optimization prompts)",
+    ]
+    tagline = f"Buyer-ready system for {lang['audience']} focused on {lang['value_theme']}."
+    description = (
+        f"A practical digital product for {lang['audience']} that prioritizes {lang['value_theme']}. "
+        f"This package includes guided setup, editable core assets, and execution support so buyers can "
+        f"{lang['benefit_line']} without guesswork."
+    )
+    preview_snippet = (
+        f"How this is used in the real world: open the guided app, customize each asset in order, "
+        f"run one live implementation, then track weekly outcomes. The goal is to {lang['benefit_line']}."
+    )
+    return {
+        "title": title,
+        "category": category,
+        "tagline": tagline,
+        "description": description,
+        "preview_items": preview_items,
+        "preview_snippet": preview_snippet,
+    }
+
+
+def run_ai_team_autofix(occupation: str, limit: int = 50, min_score: int = 80, max_updates: int = 20) -> dict:
+    report = build_ai_team_report(occupation, limit=limit)
+    fail_candidates = report.get("lowest_scoring_products", [])
+    to_fix = [x for x in fail_candidates if int(x.get("score", 0)) < min_score][: max(1, min(200, max_updates))]
+    updates = []
+    for item in to_fix:
+        product = get_product(item.get("id", ""))
+        if not product:
+            continue
+        fixed = _autofix_content_for_product(product, occupation)
+        save_content_override(
+            title=fixed["title"],
+            category=fixed["category"],
+            tagline=fixed["tagline"],
+            description=fixed["description"],
+            preview_items=fixed["preview_items"],
+            preview_snippet=fixed["preview_snippet"],
+        )
+        updates.append(
+            {
+                "id": product["id"],
+                "title": product["title"],
+                "old_score": int(item.get("score", 0)),
+                "new_tagline": fixed["tagline"],
+            }
+        )
+    return {
+        "ok": True,
+        "occupation_target": occupation,
+        "min_score_threshold": min_score,
+        "max_updates": max_updates,
+        "updated_count": len(updates),
+        "updated_products": updates,
+    }
+
+
 def real_world_preview(title: str) -> dict:
     previews = {
         "Creator Caption Vault": {
@@ -2516,6 +2628,19 @@ def init_db() -> None:
         )
         """
     )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS product_content_overrides (
+            title TEXT PRIMARY KEY,
+            category TEXT NOT NULL,
+            tagline TEXT NOT NULL,
+            description TEXT NOT NULL,
+            preview_items_json TEXT NOT NULL,
+            preview_snippet TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+        """
+    )
     conn.commit()
     conn.close()
 
@@ -2532,6 +2657,63 @@ def list_products(active_only: bool = True) -> list[dict]:
         ).fetchall()
     conn.close()
     return [enrich_product(dict(r)) for r in rows]
+
+
+def get_content_override(title: str) -> dict | None:
+    conn = db()
+    row = conn.execute(
+        """
+        SELECT title, category, tagline, description, preview_items_json, preview_snippet, updated_at
+        FROM product_content_overrides
+        WHERE title = ?
+        """,
+        (title,),
+    ).fetchone()
+    conn.close()
+    if not row:
+        return None
+    data = dict(row)
+    try:
+        data["preview_items"] = json.loads(data.get("preview_items_json") or "[]")
+    except Exception:
+        data["preview_items"] = []
+    return data
+
+
+def save_content_override(
+    title: str,
+    category: str,
+    tagline: str,
+    description: str,
+    preview_items: list[str],
+    preview_snippet: str,
+) -> None:
+    conn = db()
+    conn.execute(
+        """
+        INSERT INTO product_content_overrides
+        (title, category, tagline, description, preview_items_json, preview_snippet, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(title) DO UPDATE SET
+            category=excluded.category,
+            tagline=excluded.tagline,
+            description=excluded.description,
+            preview_items_json=excluded.preview_items_json,
+            preview_snippet=excluded.preview_snippet,
+            updated_at=excluded.updated_at
+        """,
+        (
+            title,
+            category,
+            tagline,
+            description,
+            json.dumps(preview_items),
+            preview_snippet,
+            utc_now_iso(),
+        ),
+    )
+    conn.commit()
+    conn.close()
 
 
 def get_product(product_id: str) -> dict | None:
@@ -3954,6 +4136,28 @@ def admin_ai_team_report():
     occupation = (flask_request.args.get("occupation") or "small business owner").strip()
     limit = int(flask_request.args.get("limit") or "50")
     return jsonify(build_ai_team_report(occupation, limit=limit))
+
+
+@app.post("/admin/ai-team/autofix")
+def admin_ai_team_autofix():
+    if not admin_guard_any():
+        return jsonify({"error": "unauthorized"}), 401
+    occupation = (
+        flask_request.form.get("occupation")
+        or flask_request.args.get("occupation")
+        or "small business owner"
+    ).strip()
+    limit = int(flask_request.form.get("limit") or flask_request.args.get("limit") or "50")
+    min_score = int(flask_request.form.get("min_score") or flask_request.args.get("min_score") or "80")
+    max_updates = int(flask_request.form.get("max_updates") or flask_request.args.get("max_updates") or "20")
+    result = run_ai_team_autofix(occupation, limit=limit, min_score=min_score, max_updates=max_updates)
+    if (flask_request.form.get("redirect") or "") == "1":
+        token = admin_token_value()
+        return redirect(
+            f"/admin?admin_token={parse.quote(token)}&autofix=done&updated={result.get('updated_count', 0)}",
+            code=302,
+        )
+    return jsonify(result)
 
 
 @app.get("/checkout/<product_id>")
