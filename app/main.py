@@ -1876,6 +1876,161 @@ def build_product_qc_zip(product: dict) -> bytes:
     return buf.getvalue()
 
 
+def _word_set(text: str) -> set[str]:
+    tokens: list[str] = []
+    current = []
+    for ch in (text or "").lower():
+        if ch.isalnum():
+            current.append(ch)
+        elif current:
+            tokens.append("".join(current))
+            current = []
+    if current:
+        tokens.append("".join(current))
+    return {t for t in tokens if len(t) > 2}
+
+
+def _occupation_focus(occupation: str) -> dict:
+    o = (occupation or "").lower()
+    mapping = {
+        "fitness": {"goal": "deliver client training plans", "keywords": ["workout", "habit", "plan", "coach", "health"]},
+        "coach": {"goal": "deliver premium coaching assets", "keywords": ["client", "program", "offer", "onboarding", "delivery"]},
+        "teacher": {"goal": "organize curriculum and family routines", "keywords": ["planner", "schedule", "family", "worksheet", "routine"]},
+        "freelancer": {"goal": "run client ops and proposals", "keywords": ["scope", "proposal", "invoice", "client", "retainer"]},
+        "realtor": {"goal": "convert and nurture leads", "keywords": ["lead", "buyer", "listing", "followup", "consult"]},
+        "airbnb": {"goal": "improve guest experience", "keywords": ["guest", "welcome", "host", "checkout", "message"]},
+        "creator": {"goal": "publish and monetize content", "keywords": ["content", "hook", "caption", "audience", "cta"]},
+        "ecommerce": {"goal": "improve listing conversion", "keywords": ["listing", "product", "keyword", "seo", "shop"]},
+        "finance": {"goal": "track cash flow and planning", "keywords": ["budget", "cashflow", "tracker", "revenue", "savings"]},
+        "operations": {"goal": "standardize team workflows", "keywords": ["sop", "process", "checklist", "owner", "handoff"]},
+    }
+    for k, v in mapping.items():
+        if k in o:
+            return v
+    return {"goal": "use ready-to-run professional templates", "keywords": _word_set(occupation) or {"template", "planner", "checklist"}}
+
+
+def run_virtual_product_test(product: dict, occupation: str) -> dict:
+    focus = _occupation_focus(occupation)
+    expected_assets = len(product.get("preview_items", []))
+    zip_bytes = build_customer_product_pack(product)
+
+    required_files = {
+        "00_READ_FIRST.txt",
+        "01_Start_Here.html",
+        "02_Quickstart_Action_Plan.csv",
+        "03_Master_Workbook.csv",
+        "07_Implementation_Playbook.html",
+        "10_Interactive_Builder.html",
+        "11_License_and_Guarantee.html",
+        "16_Guided_Interactive_Experience.html",
+    }
+    with zipfile.ZipFile(io.BytesIO(zip_bytes), mode="r") as zf:
+        names = set(zf.namelist())
+        missing = sorted(required_files - names)
+        asset_files = sorted([n for n in names if n.startswith("asset_") and n.endswith(".csv")])
+        sample_names = sorted(list(names))[:20]
+
+        text_blob_parts = []
+        for name in zf.namelist():
+            if not name.endswith((".txt", ".csv", ".html", ".md", ".json")):
+                continue
+            try:
+                text_blob_parts.append(zf.read(name).decode("utf-8", errors="ignore"))
+            except Exception:
+                continue
+        text_blob = "\n".join(text_blob_parts)
+
+    bad_markers = ["lorem ipsum", "[insert", "todo", "tbd", "dummy text", "placeholder"]
+    marker_hits = [m for m in bad_markers if m in text_blob.lower()]
+
+    product_text = " ".join(
+        [
+            product.get("title", ""),
+            product.get("category", ""),
+            product.get("tagline", ""),
+            product.get("description", ""),
+            " ".join(product.get("preview_items", [])),
+            text_blob[:12000],
+        ]
+    )
+    product_words = _word_set(product_text)
+    focus_words = set(focus["keywords"])
+    overlap = sorted(list(product_words & focus_words))
+
+    completeness = max(0, 100 - len(missing) * 12 - max(0, expected_assets - len(asset_files)) * 8)
+    usability = 100
+    if "16_Guided_Interactive_Experience.html" not in names:
+        usability -= 30
+    if "10_Interactive_Builder.html" not in names:
+        usability -= 20
+    if len(asset_files) == 0:
+        usability -= 30
+    clarity = max(0, 100 - len(marker_hits) * 20)
+    relevance = min(100, 35 + len(overlap) * 12)
+
+    overall = int(round((completeness * 0.30) + (usability * 0.30) + (clarity * 0.20) + (relevance * 0.20)))
+    passed = overall >= 80 and not missing and len(marker_hits) == 0
+
+    occupation_goal = focus["goal"]
+    usage_simulation = (
+        f"Simulated buyer ({occupation}): downloads pack, opens guided experience, "
+        f"customizes first asset, and uses it to {occupation_goal}."
+    )
+
+    issues = []
+    if missing:
+        issues.append(f"Missing required files: {', '.join(missing)}")
+    if len(asset_files) < expected_assets:
+        issues.append(f"Asset file count is low ({len(asset_files)}/{expected_assets} expected from preview items).")
+    if marker_hits:
+        issues.append(f"Placeholder markers detected: {', '.join(marker_hits)}")
+    if relevance < 60:
+        issues.append("Occupation relevance is weak; deliverables should be tuned more directly to this buyer type.")
+
+    recommendations = []
+    if missing:
+        recommendations.append("Regenerate the pack and ensure all required retail files are included.")
+    if len(asset_files) < expected_assets:
+        recommendations.append("Create one concrete asset file per listed deliverable.")
+    if marker_hits:
+        recommendations.append("Remove placeholder language and replace with finalized, buyer-usable copy.")
+    if relevance < 60:
+        recommendations.append("Align examples/scripts to the target occupation's daily workflow and outcomes.")
+    if not recommendations:
+        recommendations.append("Pack is sale-ready for this occupation test. Continue with human QA spot checks.")
+
+    return {
+        "ok": True,
+        "passed": passed,
+        "overall_score": overall,
+        "scores": {
+            "completeness": int(completeness),
+            "usability": int(usability),
+            "clarity": int(clarity),
+            "occupation_relevance": int(relevance),
+        },
+        "occupation": occupation,
+        "occupation_goal": occupation_goal,
+        "product": {
+            "id": product.get("id"),
+            "title": product.get("title"),
+            "category": product.get("category"),
+            "price_cents": product.get("price_cents"),
+        },
+        "download_validation": {
+            "required_files_missing": missing,
+            "asset_files_found": asset_files,
+            "expected_asset_count": expected_assets,
+            "sample_files_checked": sample_names,
+        },
+        "simulated_usage": usage_simulation,
+        "relevance_overlap_keywords": overlap,
+        "issues": issues,
+        "recommendations": recommendations,
+    }
+
+
 def real_world_preview(title: str) -> dict:
     previews = {
         "Creator Caption Vault": {
@@ -3573,6 +3728,56 @@ def admin_download_links():
             }
         )
     return jsonify({"count": len(links), "products": links})
+
+
+@app.get("/admin/test-agent")
+def admin_test_agent():
+    if not admin_guard_any():
+        return jsonify({"error": "unauthorized"}), 401
+    product_id = (flask_request.args.get("product_id") or "").strip()
+    title = (flask_request.args.get("title") or "").strip()
+    occupation = (flask_request.args.get("occupation") or "small business owner").strip()
+    product = None
+    if product_id:
+        product = get_product(product_id)
+    elif title:
+        product = get_product_by_title(title)
+    if not product:
+        return jsonify({"error": "product not found", "hint": "pass product_id or title"}), 404
+    return jsonify(run_virtual_product_test(product, occupation))
+
+
+@app.get("/admin/test-agent/all")
+def admin_test_agent_all():
+    if not admin_guard_any():
+        return jsonify({"error": "unauthorized"}), 401
+    occupation = (flask_request.args.get("occupation") or "small business owner").strip()
+    limit = int(flask_request.args.get("limit") or "50")
+    products = list_products()[: max(1, min(200, limit))]
+    reports = [run_virtual_product_test(p, occupation) for p in products]
+    passed = [r for r in reports if r.get("passed")]
+    failed = [r for r in reports if not r.get("passed")]
+    avg = int(round(sum(int(r.get("overall_score", 0)) for r in reports) / max(1, len(reports))))
+    return jsonify(
+        {
+            "ok": True,
+            "occupation": occupation,
+            "count": len(reports),
+            "average_score": avg,
+            "passed": len(passed),
+            "failed": len(failed),
+            "failures": [
+                {
+                    "id": r["product"]["id"],
+                    "title": r["product"]["title"],
+                    "score": r["overall_score"],
+                    "issues": r.get("issues", []),
+                }
+                for r in failed
+            ],
+            "results": reports,
+        }
+    )
 
 
 @app.get("/checkout/<product_id>")

@@ -203,3 +203,6 @@ Option B: Manual token:
   - `16_Guided_Interactive_Experience.html`
 - Live guided builder page:
   - `GET /experience/<product_id>`
+- Virtual product testing agent (admin token required):
+  - `GET /admin/test-agent?product_id=<id>&occupation=<job title>&admin_token=<ADMIN_TOKEN>`
+  - `GET /admin/test-agent/all?occupation=<job title>&limit=50&admin_token=<ADMIN_TOKEN>`
