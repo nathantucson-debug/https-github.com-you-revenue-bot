@@ -3074,6 +3074,11 @@ def handle_post_purchase_delivery(event: dict, sale_id: str) -> tuple[bool, str]
         product = get_product(product_id)
         if product:
             token = create_download_token({"kind": "product", "product_id": product_id, "email": email})
+            experience_token = create_download_token({"kind": "experience", "product_id": product_id, "email": email})
+            lines.append(
+                f"- {product['title']} guided app: "
+                f"{base_url}/experience/{product_id}?token={parse.quote(experience_token)}"
+            )
             lines.append(
                 f"- {product['title']}: {base_url}/download/product/{product_id}?token={parse.quote(token)}"
             )
@@ -3347,6 +3352,18 @@ def product_experience(product_id: str):
     product = get_product(product_id)
     if not product:
         return jsonify({"error": "product not found"}), 404
+    if admin_guard_any():
+        return Response(_guided_experience_html(product), mimetype="text/html")
+    token = (flask_request.args.get("token") or "").strip()
+    payload = parse_download_token(token)
+    if not payload or payload.get("kind") != "experience" or payload.get("product_id") != product_id:
+        return jsonify(
+            {
+                "error": "purchase required",
+                "message": "Guided product experience unlocks after purchase via private buyer link.",
+                "checkout_url": f"/checkout/{product_id}",
+            }
+        ), 403
     return Response(_guided_experience_html(product), mimetype="text/html")
 
 
