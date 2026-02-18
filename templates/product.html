@@ -5,102 +5,62 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ product.title }} | Northstar Studio</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=General+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
-    :root {
-      --ink:#111827;
-      --muted:#4b5563;
-      --line:#e5e7eb;
-      --bg:#f7f7f5;
-      --card:#fff;
-      --brand:#1d4ed8;
-      --ok:#15815b;
-      --warn:#ab5c00;
-      --brand-soft:#e8efff;
-    }
-    * { box-sizing:border-box; }
-    body { margin:0; font-family:"General Sans","Avenir Next","Segoe UI",sans-serif; color:var(--ink); background:var(--bg); }
-    .wrap { max-width:1180px; margin:0 auto; padding:0 1rem; }
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Cormorant+Garamond:wght@600;700&display=swap');
+    :root{--ink:#e9eef8;--text:#c6d2e6;--bg:#070b14;--panel:#0e1422;--line:#233049;--brand:#3b82f6;--brand2:#22d3ee;--ok:#2fd6a3;--warn:#f5b971;--gold:#f6e9c4}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:"Outfit",system-ui,sans-serif;background:radial-gradient(900px 380px at 0 -10%,#1a2740 0%,transparent 60%),var(--bg);color:var(--ink)}
+    .wrap{max-width:1180px;margin:0 auto;padding:0 1rem}
+    header{position:sticky;top:0;z-index:30;background:rgba(7,11,20,.85);backdrop-filter:blur(10px);border-bottom:1px solid #1a2438}
+    .nav{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:.85rem 0}
+    .brand{display:flex;align-items:center;gap:.62rem;text-decoration:none;color:inherit}
+    .brand img{width:36px;height:36px;border-radius:10px}
+    .brand h2{margin:0;font:700 1.18rem "Cormorant Garamond",serif;color:#f3f7ff}
+    .brand p{margin:0;font-size:.76rem;color:#8fa3c7}
+    .btn{display:inline-block;text-decoration:none;border:1px solid #2a3a5f;background:#15213a;color:#e7efff;padding:.56rem .84rem;border-radius:10px;font-weight:600}
+    .btn.primary{background:linear-gradient(135deg,var(--brand),var(--brand2));border:none;color:#071021;font-weight:700}
 
-    header { position:sticky; top:0; z-index:30; background:rgba(247,247,245,.92); backdrop-filter:blur(8px); border-bottom:1px solid var(--line); }
-    .nav { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:.85rem 0; }
-    .brand { display:flex; align-items:center; gap:.62rem; text-decoration:none; color:inherit; }
-    .brand img { width:36px; height:36px; border-radius:9px; }
-    .brand h2 { margin:0; font-size:1.1rem; }
-    .brand p { margin:0; font-size:.78rem; color:#64748b; }
+    main{padding:1rem 0 1.95rem}
+    .status{margin-bottom:.6rem;padding:.54rem .66rem;border-radius:10px;border:1px solid #2a3a5f;background:#0f182a;font-size:.9rem}
+    .status.ok{color:var(--ok)}.status.warn{color:var(--warn)}
 
-    .btn { display:inline-block; text-decoration:none; border:1px solid var(--line); color:var(--ink); background:#fff; padding:.56rem .84rem; border-radius:10px; font-weight:600; }
-    .btn.primary { background:var(--brand); border-color:var(--brand); color:#fff; }
+    .layout{display:grid;grid-template-columns:1.18fr .82fr;gap:1rem;align-items:start}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:.9rem}
+    .cat{display:inline-block;font-size:.72rem;color:#b8d1ff;background:#152744;border:1px solid #30466d;border-radius:999px;padding:.18rem .5rem;margin-bottom:.4rem}
+    h1{margin:0 0 .35rem;font:700 clamp(2rem,4vw,2.9rem) "Cormorant Garamond",serif;line-height:1.04;color:#f2f6ff}
+    .tagline{margin:0 0 .4rem;color:#c5d1e6}
+    .desc{margin:0 0 .6rem;color:#b8c6de;line-height:1.58}
+    .price{margin:0 0 .7rem;font:700 2rem "Cormorant Garamond",serif;color:var(--gold)}
+    .buyer-note{margin:0 0 .82rem;border:1px solid #30466d;background:#101d34;border-radius:10px;padding:.56rem .66rem;color:#c4d5f0;font-size:.9rem}
 
-    main { padding:1rem 0 1.9rem; }
-    .status { margin-bottom:.65rem; padding:.56rem .68rem; border-radius:10px; border:1px solid var(--line); background:#fff; font-size:.9rem; font-weight:600; }
-    .status.ok { color:var(--ok); border-color:#bfe8d5; background:#f1fcf6; }
-    .status.warn { color:var(--warn); border-color:#efd4bb; background:#fff8f1; }
+    h3{margin:.9rem 0 .42rem;font:700 1.15rem "Cormorant Garamond",serif;color:#f0f5ff}
+    .artifact{border:1px solid #24344f;border-radius:12px;overflow:hidden;background:#0f182a}
+    .artifact-head{padding:.66rem .74rem;border-bottom:1px solid #24344f;background:#111d33}
+    .artifact-head h4{margin:0 0 .2rem;font-size:1rem;color:#e7efff}
+    .artifact-head p{margin:0;color:#9bb0d1;font-size:.88rem}
+    .artifact table{width:100%;border-collapse:collapse;font-size:.84rem}
+    .artifact th,.artifact td{border-bottom:1px solid #24344f;padding:.42rem .48rem;text-align:left;vertical-align:top;color:#d3deef}
+    .artifact th{background:#131f36;color:#e8f0ff}
+    .artifact-result{padding:.54rem .74rem;background:#101b2e;color:#bfd0ea}
 
-    .layout { display:grid; grid-template-columns:1.2fr .8fr; gap:1rem; align-items:start; }
-    .card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:.9rem; }
+    .list{margin:0;padding-left:1rem;color:#c6d3e8}.list li{margin:.24rem 0}
+    .preview{border:1px solid #24344f;background:#101a2d;border-radius:10px;padding:.68rem;color:#c5d2e8;line-height:1.52}
 
-    .cat { display:inline-block; font-size:.72rem; color:#1e3a8a; background:var(--brand-soft); border:1px solid #dbe5fb; border-radius:999px; padding:.18rem .5rem; margin-bottom:.4rem; }
-    h1 { margin:0 0 .35rem; font:700 clamp(1.95rem,3.9vw,2.8rem) "Playfair Display",serif; line-height:1.04; letter-spacing:-.02em; }
-    .tagline { margin:0 0 .4rem; font-weight:600; color:#1f2937; }
-    .desc { margin:0 0 .62rem; color:var(--muted); line-height:1.6; }
-    .price { margin:0 0 .7rem; font:700 2rem "Playfair Display",serif; }
-    .buyer-note { margin:0 0 .85rem; border:1px solid #dbe5fb; background:#f8faff; border-radius:10px; padding:.58rem .68rem; color:#334155; font-size:.9rem; }
+    .side{position:sticky;top:76px}
+    .small{color:#b8c6de;font-size:.9rem;line-height:1.45}
+    label{display:block;margin:.42rem 0 .2rem;font-size:.84rem;color:#c7d5ec}
+    input[type="email"]{width:100%;border:1px solid #30466d;border-radius:10px;padding:.58rem .66rem;background:#0f182a;color:#e6eefb}
+    .inline{display:flex;align-items:flex-start;gap:.4rem;margin:.48rem 0;color:#c6d3e8}
+    .trust{margin-top:.62rem;border:1px solid #30466d;background:#101d34;border-radius:10px;padding:.56rem .66rem;color:#c4d5f0;font-size:.86rem}
 
-    h3 { margin:.92rem 0 .42rem; font:700 1.15rem "Playfair Display",serif; }
-    .artifact { border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#fff; }
-    .artifact-head { padding:.66rem .74rem; border-bottom:1px solid var(--line); background:#fafafa; }
-    .artifact-head h4 { margin:0 0 .2rem; font-size:1rem; }
-    .artifact-head p { margin:0; color:#64748b; font-size:.88rem; }
-    .artifact table { width:100%; border-collapse:collapse; font-size:.86rem; }
-    .artifact th, .artifact td { border-bottom:1px solid #edf1f6; padding:.44rem .5rem; text-align:left; vertical-align:top; }
-    .artifact th { background:#fff; color:#334155; }
-    .artifact-result { padding:.55rem .74rem; background:#fafafa; color:#374151; font-weight:600; }
-
-    .list { margin:0; padding-left:1rem; color:#374151; }
-    .list li { margin:.24rem 0; }
-    .preview { border:1px solid var(--line); background:#fafafa; border-radius:10px; padding:.7rem; color:#374151; line-height:1.52; }
-
-    .side { position:sticky; top:76px; }
-    .small { color:var(--muted); font-size:.9rem; line-height:1.45; }
-    label { display:block; margin:.42rem 0 .2rem; font-size:.84rem; font-weight:600; color:#334155; }
-    input[type="email"] { width:100%; border:1px solid var(--line); border-radius:10px; padding:.58rem .66rem; font-size:.94rem; }
-    .inline { display:flex; align-items:flex-start; gap:.4rem; margin:.48rem 0; color:#374151; }
-    .trust { margin-top:.65rem; border:1px solid #dbe5fb; background:#f8faff; border-radius:10px; padding:.56rem .66rem; color:#334155; font-size:.86rem; }
-
-    .mobile-buybar { display:none; }
-    .mobile-buybar-spacer { display:none; }
-
-    @media (max-width:900px) {
-      .layout { grid-template-columns:1fr; }
-      .side { position:static; }
-    }
-    @media (max-width:700px) {
-      .brand p { display:none; }
-      h1 { font-size:2rem; }
-      .artifact th, .artifact td { font-size:.78rem; padding:.36rem .42rem; }
-      .mobile-buybar-spacer { display:block; height:80px; }
-      .mobile-buybar {
-        display:flex; position:fixed; left:0; right:0; bottom:0; z-index:40;
-        align-items:center; justify-content:space-between; gap:.5rem;
-        padding:.54rem .66rem calc(.54rem + env(safe-area-inset-bottom));
-        background:#fff; border-top:1px solid var(--line); box-shadow:0 -10px 22px rgba(15,23,42,.1);
-      }
-      .mobile-buybar .mini { font:700 1.06rem "Playfair Display",serif; }
-      .mobile-buybar .mini span { display:block; font:600 .73rem "General Sans",sans-serif; color:#64748b; }
-      .mobile-buybar .btn { flex:1; text-align:center; }
-    }
+    .mobile-buybar{display:none}.mobile-buybar-spacer{display:none}
+    @media (max-width:900px){.layout{grid-template-columns:1fr}.side{position:static}}
+    @media (max-width:700px){.brand p{display:none}h1{font-size:2.1rem}.artifact th,.artifact td{font-size:.77rem;padding:.35rem .4rem}.mobile-buybar-spacer{display:block;height:82px}.mobile-buybar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:40;align-items:center;justify-content:space-between;gap:.5rem;padding:.54rem .66rem calc(.54rem + env(safe-area-inset-bottom));background:#0c1322;border-top:1px solid #2a3a5f;box-shadow:0 -10px 22px rgba(0,0,0,.35)}.mobile-buybar .mini{font:700 1.08rem "Cormorant Garamond",serif;color:var(--gold)}.mobile-buybar .mini span{display:block;font:600 .73rem "Outfit",sans-serif;color:#8da2c4}.mobile-buybar .btn{flex:1;text-align:center}}
   </style>
 </head>
 <body>
   <header>
     <div class="wrap nav">
-      <a class="brand" href="/">
-        <img src="/static/brand/northstar-mark.svg" alt="Northstar Studio">
-        <div>
-          <h2>Northstar Studio</h2>
-          <p>Premium Digital Systems</p>
-        </div>
-      </a>
+      <a class="brand" href="/"><img src="/static/brand/northstar-mark.svg" alt="Northstar Studio"><div><h2>Northstar Studio</h2><p>Premium Digital Systems</p></div></a>
       <a class="btn" href="/store">Back to store</a>
     </div>
   </header>
@@ -122,14 +82,8 @@
 
         <h3>Sample output preview</h3>
         <div class="artifact">
-          <div class="artifact-head">
-            <h4>{{ product.real_world_preview.headline }}</h4>
-            <p>{{ product.real_world_preview.subhead }}</p>
-          </div>
-          <table>
-            <thead><tr>{% for c in product.real_world_preview.columns %}<th>{{ c }}</th>{% endfor %}</tr></thead>
-            <tbody>{% for row in product.real_world_preview.rows %}<tr>{% for cell in row %}<td>{{ cell }}</td>{% endfor %}</tr>{% endfor %}</tbody>
-          </table>
+          <div class="artifact-head"><h4>{{ product.real_world_preview.headline }}</h4><p>{{ product.real_world_preview.subhead }}</p></div>
+          <table><thead><tr>{% for c in product.real_world_preview.columns %}<th>{{ c }}</th>{% endfor %}</tr></thead><tbody>{% for row in product.real_world_preview.rows %}<tr>{% for cell in row %}<td>{{ cell }}</td>{% endfor %}</tr>{% endfor %}</tbody></table>
           <div class="artifact-result">{{ product.real_world_preview.result }}</div>
         </div>
 
@@ -143,7 +97,6 @@
       <aside class="card side">
         <h3>Checkout</h3>
         <p class="small">Instant delivery after payment. 7-day satisfaction guarantee with one-time store credit per payment.</p>
-
         <form action="/checkout/{{ product.id }}" method="GET">
           <input type="hidden" name="lead_id" value="{{ lead_id }}">
           <label class="inline"><input type="checkbox" name="add_bump" value="1"> Add {{ order_bump.name }} (+${{ "%.2f"|format(order_bump.price_cents / 100) }})</label>
@@ -151,7 +104,7 @@
         </form>
         <div class="trust">Guided app access unlocks after purchase via private buyer link.</div>
 
-        <hr style="margin:1rem 0;border:none;border-top:1px solid var(--line)">
+        <hr style="margin:1rem 0;border:none;border-top:1px solid #24344f">
 
         <h3>Save for later</h3>
         <p class="small">Enter your email and we’ll keep your checkout link.</p>
