@@ -890,6 +890,464 @@ def _csv_block(headers: list[str], rows: list[list[str]]) -> str:
     return "\n".join(lines)
 
 
+WAVE1_PRODUCT_ASSETS = {
+    "Creator Caption Vault": {
+        "buyer_result": "Publish 7 conversion-focused captions in one week with clear CTAs.",
+        "quickstart_steps": [
+            "Pick one offer and one audience segment.",
+            "Customize the 7-day caption planner with your product details.",
+            "Post day 1 and day 2 captions today.",
+            "Track saves, profile visits, and DMs in the weekly tracker.",
+        ],
+        "scripts": [
+            "Hook: If your content gets views but no sales, start here.",
+            "Value: Use this 3-part caption format: problem, proof, next step.",
+            "CTA: Comment READY and I will send the exact framework.",
+            "Offer: Use this caption planner to publish consistently this week.",
+        ],
+        "assets": [
+            {
+                "name": "7-Day Caption Planner",
+                "headers": ["Day", "Hook", "Core Message", "CTA", "Offer Mention", "Status"],
+                "template_rows": [
+                    ["Mon", "Call out the main pain point", "Teach one practical fix", "Save this post", "Soft", "Planned"],
+                    ["Tue", "Share a common mistake", "Show your framework", "Comment GUIDE", "Medium", "Planned"],
+                    ["Wed", "Debunk a myth", "Provide proof", "DM START", "Strong", "Planned"],
+                ],
+                "completed_rows": [
+                    ["Mon", "Posting every day but still no leads?", "Your caption needs a clear next step, not more words.", "Save this for your next post", "Creator Ops Kit", "Completed"],
+                    ["Tue", "Most creators skip this conversion step", "Use pain -> proof -> step in every post this week.", "Comment GUIDE", "Creator Ops Kit", "Completed"],
+                    ["Wed", "Your CTA might be killing momentum", "One CTA per post outperforms mixed actions.", "DM START", "Creator Ops Kit", "Completed"],
+                ],
+                "purpose": "Plan and execute one full week of strategic captions.",
+            },
+            {
+                "name": "CTA Matrix",
+                "headers": ["Goal", "CTA Type", "Exact CTA", "Best Placement", "When To Use", "Status"],
+                "template_rows": [
+                    ["Engagement", "Comment", "Comment KEYWORD", "Last line", "Educational posts", "Planned"],
+                    ["Lead capture", "DM", "DM START", "Last line + P.S.", "Offer posts", "Planned"],
+                ],
+                "completed_rows": [
+                    ["Engagement", "Comment", "Comment MAP for the full checklist", "Last line", "Framework posts", "Completed"],
+                    ["Lead capture", "DM", "DM START for the done-for-you version", "Last line + follow-up story", "Sales posts", "Completed"],
+                ],
+                "purpose": "Match CTA type to campaign goal so posts convert better.",
+            },
+            {
+                "name": "Weekly Performance Review",
+                "headers": ["Metric", "Target", "Actual", "Gap", "Action For Next Week", "Owner"],
+                "template_rows": [
+                    ["Saves", "120", "", "", "Improve value density in carousel posts", "You"],
+                    ["Profile Visits", "80", "", "", "Add stronger CTA in day 2 and day 4 posts", "You"],
+                ],
+                "completed_rows": [
+                    ["Saves", "120", "138", "+18", "Keep educational structure", "You"],
+                    ["Profile Visits", "80", "74", "-6", "Test stronger CTA with DM keyword", "You"],
+                ],
+                "purpose": "Measure output quality and improve week-over-week.",
+            },
+        ],
+    },
+    "Short-Form Hook Library": {
+        "buyer_result": "Ship 20 stronger hooks in one session for reels/shorts.",
+        "assets": [
+            {
+                "name": "Hook Sprint Board",
+                "headers": ["Theme", "Audience Pain", "Hook Draft", "Hook Type", "Platform", "Status"],
+                "template_rows": [
+                    ["Content strategy", "Low retention", "Use this pattern to keep people watching", "Pattern interrupt", "Reels", "Draft"],
+                    ["Sales", "No inbound DMs", "If your videos get views but no buyers...", "Pain callout", "TikTok", "Draft"],
+                ],
+                "completed_rows": [
+                    ["Content strategy", "Low retention", "Most creators lose viewers in the first 2 seconds. Fix this first.", "Pattern interrupt", "Reels", "Completed"],
+                    ["Sales", "No inbound DMs", "Your content can be good and still not sell. Here is why.", "Pain callout", "TikTok", "Completed"],
+                ],
+                "purpose": "Generate and test hooks quickly by intent.",
+            },
+            {
+                "name": "Retention Hook Scorecard",
+                "headers": ["Hook", "Clarity (1-10)", "Curiosity (1-10)", "Specificity (1-10)", "Total", "Decision"],
+                "template_rows": [
+                    ["Most people do this wrong...", "", "", "", "", "Review"],
+                    ["If you only fix one thing this week...", "", "", "", "", "Review"],
+                ],
+                "completed_rows": [
+                    ["Most people do this wrong with short-form content", "8", "7", "7", "22", "Publish"],
+                    ["If you only fix one thing this week, fix your opener", "9", "8", "9", "26", "Publish"],
+                ],
+                "purpose": "Score hooks objectively before publishing.",
+            },
+            {
+                "name": "30-Day Hook Rotation",
+                "headers": ["Week", "Hook Theme", "Primary CTA", "Publishing Slots", "Owner", "Status"],
+                "template_rows": [
+                    ["Week 1", "Pain + quick fix", "Save", "Mon/Wed/Fri", "You", "Planned"],
+                    ["Week 2", "Myth vs reality", "Comment", "Mon/Wed/Fri", "You", "Planned"],
+                ],
+                "completed_rows": [
+                    ["Week 1", "Pain + quick fix", "Save", "Mon/Wed/Fri", "You", "Completed"],
+                    ["Week 2", "Myth vs reality", "Comment KEYWORD", "Mon/Wed/Fri", "You", "In Progress"],
+                ],
+                "purpose": "Turn hooks into a repeatable monthly system.",
+            },
+        ],
+    },
+    "UGC Pitch Deck Kit": {
+        "buyer_result": "Send polished brand pitch decks that convert to discovery calls.",
+        "assets": [
+            {
+                "name": "Brand Pitch Deck Outline",
+                "headers": ["Slide", "Content Goal", "What To Include", "Proof Element", "CTA", "Status"],
+                "template_rows": [
+                    ["1", "Positioning", "Who you help and key outcome", "Niche experience", "Continue", "Draft"],
+                    ["2", "Services", "Packages and deliverables", "Scope clarity", "Continue", "Draft"],
+                ],
+                "completed_rows": [
+                    ["1", "Positioning", "I help skincare brands increase paid ad CTR with creator-led UGC.", "30+ short-form assets delivered", "Continue", "Completed"],
+                    ["2", "Services", "Starter, Growth, and Scale package with timelines.", "Clear revision policy included", "Book a call", "Completed"],
+                ],
+                "purpose": "Build a credible deck structure before design polish.",
+            },
+            {
+                "name": "Rate Card Builder",
+                "headers": ["Package", "Deliverables", "Timeline", "Price", "Revision Policy", "Status"],
+                "template_rows": [
+                    ["Starter", "3 videos", "7 days", "", "1 revision", "Draft"],
+                    ["Growth", "6 videos + hooks", "10 days", "", "2 revisions", "Draft"],
+                ],
+                "completed_rows": [
+                    ["Starter", "3 videos", "7 days", "$650", "1 revision", "Completed"],
+                    ["Growth", "6 videos + hooks", "10 days", "$1,150", "2 revisions", "Completed"],
+                ],
+                "purpose": "Create clear package pricing for faster approvals.",
+            },
+            {
+                "name": "Outreach Follow-Up Sequence",
+                "headers": ["Touch", "Timing", "Message Goal", "Script", "CTA", "Status"],
+                "template_rows": [
+                    ["1", "Day 0", "Initial value pitch", "", "Reply", "Draft"],
+                    ["2", "Day 3", "Proof and reminder", "", "Book call", "Draft"],
+                ],
+                "completed_rows": [
+                    ["1", "Day 0", "Initial value pitch", "Built a concept board for your upcoming launch with 3 hooks.", "Reply if you want the concept sample", "Completed"],
+                    ["2", "Day 3", "Proof and reminder", "Recent campaign improved CTR by 28% in 2 weeks.", "Choose one of these call slots", "Completed"],
+                ],
+                "purpose": "Run outreach in a consistent cadence with proof.",
+            },
+        ],
+    },
+    "Notion Operator System": {
+        "buyer_result": "Move from scattered tasks to a weekly operating rhythm.",
+        "assets": [
+            {
+                "name": "Weekly Command Dashboard",
+                "headers": ["Priority", "Task", "Time Block", "Owner", "Definition Of Done", "Status"],
+                "template_rows": [
+                    ["High", "Launch offer page update", "Mon 9:00-11:00", "You", "Page published", "Planned"],
+                    ["High", "Client delivery batch", "Tue 10:00-12:00", "You", "All files delivered", "Planned"],
+                ],
+                "completed_rows": [
+                    ["High", "Launch offer page update", "Mon 9:00-11:00", "You", "Page published", "Completed"],
+                    ["High", "Client delivery batch", "Tue 10:00-12:00", "You", "All files delivered", "Completed"],
+                ],
+                "purpose": "Run each week from one outcome-first board.",
+            },
+            {
+                "name": "Project Pipeline Tracker",
+                "headers": ["Project", "Stage", "Next Action", "Owner", "Deadline", "Risk"],
+                "template_rows": [
+                    ["Spring campaign", "Planning", "Finalize messaging brief", "You", "Week 1", "Low"],
+                    ["Client onboarding refresh", "Execution", "Publish SOP update", "Ops", "Week 2", "Medium"],
+                ],
+                "completed_rows": [
+                    ["Spring campaign", "Execution", "Record launch assets", "You", "Week 1", "Low"],
+                    ["Client onboarding refresh", "Review", "QA final flow", "Ops", "Week 2", "Low"],
+                ],
+                "purpose": "Track all active projects and unblock bottlenecks early.",
+            },
+            {
+                "name": "Weekly Review Template",
+                "headers": ["Section", "Prompt", "Your Notes", "Action For Next Week"],
+                "template_rows": [
+                    ["Wins", "What shipped this week?", "", ""],
+                    ["Bottlenecks", "What slowed execution?", "", ""],
+                ],
+                "completed_rows": [
+                    ["Wins", "What shipped this week?", "Published 3 offer pages and delivered 2 client batches.", "Maintain Tuesday/Thursday build blocks"],
+                    ["Bottlenecks", "What slowed execution?", "Context switching across small admin tasks.", "Batch all admin into one afternoon block"],
+                ],
+                "purpose": "Close each week with data, not guesswork.",
+            },
+        ],
+    },
+    "Budget & Cashflow Spreadsheet Pro": {
+        "buyer_result": "Know your true monthly runway and improve spending decisions.",
+        "assets": [
+            {
+                "name": "Monthly Budget Dashboard",
+                "headers": ["Category", "Planned", "Actual", "Variance", "Action", "Owner"],
+                "template_rows": [
+                    ["Revenue", "12000", "", "", "Update weekly", "You"],
+                    ["Tools/Software", "450", "", "", "Trim unused subscriptions", "You"],
+                ],
+                "completed_rows": [
+                    ["Revenue", "12000", "12750", "+750", "Keep same growth channel mix", "You"],
+                    ["Tools/Software", "450", "520", "-70", "Cancel 2 unused tools", "You"],
+                ],
+                "purpose": "Track plan vs actual in a single monthly board.",
+            },
+            {
+                "name": "8-Week Cashflow Forecast",
+                "headers": ["Week", "Projected Inflow", "Projected Outflow", "Net", "Runway Note", "Status"],
+                "template_rows": [
+                    ["Week 1", "", "", "", "Maintain 6+ week runway", "Draft"],
+                    ["Week 2", "", "", "", "Watch large renewal payments", "Draft"],
+                ],
+                "completed_rows": [
+                    ["Week 1", "3,200", "2,450", "+750", "Runway stable", "Completed"],
+                    ["Week 2", "2,900", "3,100", "-200", "Delay discretionary spend", "Completed"],
+                ],
+                "purpose": "Prevent cash surprises before they happen.",
+            },
+            {
+                "name": "Profit Improvement Plan",
+                "headers": ["Opportunity", "Current State", "Target State", "Impact", "Owner", "Deadline"],
+                "template_rows": [
+                    ["Reduce software overhead", "", "", "", "You", "Week 2"],
+                    ["Increase average order value", "", "", "", "You", "Week 4"],
+                ],
+                "completed_rows": [
+                    ["Reduce software overhead", "$520/month", "$390/month", "+$130/month margin", "You", "Week 2"],
+                    ["Increase average order value", "$86", "$102", "+18% AOV", "You", "Week 4"],
+                ],
+                "purpose": "Convert financial insights into practical margin gains.",
+            },
+        ],
+    },
+    "Resume + Interview Kit": {
+        "buyer_result": "Present measurable achievements and increase interview conversion.",
+        "assets": [
+            {
+                "name": "Resume Impact Builder",
+                "headers": ["Role Target", "Achievement Input", "Impact Bullet", "Metric", "Status"],
+                "template_rows": [
+                    ["Product Marketing Manager", "Improved onboarding flow", "", "", "Draft"],
+                    ["Operations Lead", "Reduced project delays", "", "", "Draft"],
+                ],
+                "completed_rows": [
+                    ["Product Marketing Manager", "Improved onboarding flow", "Improved activation rate by 18% through onboarding redesign.", "Activation +18%", "Completed"],
+                    ["Operations Lead", "Reduced project delays", "Reduced average delivery delays by 35% by reworking planning cadence.", "Delay -35%", "Completed"],
+                ],
+                "purpose": "Turn experience into strong, quantifiable resume bullets.",
+            },
+            {
+                "name": "Interview Story Bank",
+                "headers": ["Question Type", "Situation", "Action", "Result", "Lesson", "Status"],
+                "template_rows": [
+                    ["Leadership", "", "", "", "", "Draft"],
+                    ["Conflict", "", "", "", "", "Draft"],
+                ],
+                "completed_rows": [
+                    ["Leadership", "Team missing deadlines", "Built weekly planning system", "Delivery speed improved 24%", "Simple operating rhythm wins", "Completed"],
+                    ["Conflict", "Cross-team priority mismatch", "Set decision framework", "Escalations dropped 40%", "Clarify ownership early", "Completed"],
+                ],
+                "purpose": "Prepare polished, reusable interview answers.",
+            },
+            {
+                "name": "Offer Follow-Up Kit",
+                "headers": ["Scenario", "Email Objective", "Message Draft", "CTA", "Status"],
+                "template_rows": [
+                    ["Post-interview", "Thank interviewer and reinforce fit", "", "Reply", "Draft"],
+                    ["Offer negotiation", "Align compensation with scope", "", "Schedule call", "Draft"],
+                ],
+                "completed_rows": [
+                    ["Post-interview", "Thank interviewer and reinforce fit", "Thank you for the interview. I’m excited to bring structured launch execution to this role.", "Happy to share a 30-day plan", "Completed"],
+                    ["Offer negotiation", "Align compensation with scope", "Based on scope and benchmark, I’d like to discuss a base of $X with the same start timeline.", "Can we review this together?", "Completed"],
+                ],
+                "purpose": "Handle post-interview communication professionally.",
+            },
+        ],
+    },
+    "Freelance Client Pack": {
+        "buyer_result": "Onboard clients faster with fewer revisions and faster payments.",
+        "assets": [
+            {
+                "name": "Client Scope Agreement",
+                "headers": ["Section", "Clause", "Your Version", "Client-Friendly Summary", "Status"],
+                "template_rows": [
+                    ["Deliverables", "List included outputs", "", "", "Draft"],
+                    ["Revisions", "Define number of rounds", "", "", "Draft"],
+                ],
+                "completed_rows": [
+                    ["Deliverables", "3 landing page sections + 1 revision round", "3 sections delivered in 5 business days", "You receive launch-ready copy in one week", "Completed"],
+                    ["Revisions", "Two revision rounds included", "Feedback window: 72 hours", "Clear edits with predictable turnaround", "Completed"],
+                ],
+                "purpose": "Prevent scope creep with explicit written terms.",
+            },
+            {
+                "name": "Onboarding Intake Form",
+                "headers": ["Question", "Why It Matters", "Client Response", "Owner", "Status"],
+                "template_rows": [
+                    ["What is your primary business goal this month?", "Align copy with priority outcome", "", "Client", "Open"],
+                    ["Who is the exact target buyer?", "Improve conversion clarity", "", "Client", "Open"],
+                ],
+                "completed_rows": [
+                    ["What is your primary business goal this month?", "Align copy with priority outcome", "Increase consult bookings by 20%", "Client", "Complete"],
+                    ["Who is the exact target buyer?", "Improve conversion clarity", "US-based service businesses with 2-10 team members", "Client", "Complete"],
+                ],
+                "purpose": "Collect all project-critical details before kickoff.",
+            },
+            {
+                "name": "Invoice + Follow-Up Tracker",
+                "headers": ["Invoice", "Amount", "Due Date", "Status", "Follow-Up Script", "Owner"],
+                "template_rows": [
+                    ["INV-001", "", "Week 1", "Sent", "", "You"],
+                    ["INV-002", "", "Week 2", "Draft", "", "You"],
+                ],
+                "completed_rows": [
+                    ["INV-001", "$750", "Week 1", "Paid", "Thanks for the quick payment.", "You"],
+                    ["INV-002", "$750", "Week 2", "Sent", "Friendly reminder: final invoice due tomorrow.", "You"],
+                ],
+                "purpose": "Keep payment collection organized and professional.",
+            },
+        ],
+    },
+    "Wedding Invite Suite (Canva)": {
+        "buyer_result": "Produce a polished, cohesive wedding stationery suite quickly.",
+        "assets": [
+            {
+                "name": "Invitation Copy Master",
+                "headers": ["Section", "Required Info", "Draft Copy", "Final Copy", "Status"],
+                "template_rows": [
+                    ["Main invite", "Couple names, date, venue", "", "", "Draft"],
+                    ["RSVP", "Deadline and response method", "", "", "Draft"],
+                ],
+                "completed_rows": [
+                    ["Main invite", "Couple names, date, venue", "Join us to celebrate...", "Together with their families, Anna and Marco invite you...", "Completed"],
+                    ["RSVP", "Deadline and response method", "Please RSVP by June 15", "Please RSVP by June 15 at ourwedding.com/rsvp", "Completed"],
+                ],
+                "purpose": "Finalize invitation text before visual customization.",
+            },
+            {
+                "name": "Print Export Checklist",
+                "headers": ["Asset", "Size Verified", "Bleed Added", "Color Mode", "Exported PDF", "Status"],
+                "template_rows": [
+                    ["Invitation front", "No", "No", "RGB", "No", "Draft"],
+                    ["RSVP card", "No", "No", "RGB", "No", "Draft"],
+                ],
+                "completed_rows": [
+                    ["Invitation front", "Yes", "Yes", "CMYK", "Yes", "Completed"],
+                    ["RSVP card", "Yes", "Yes", "CMYK", "Yes", "Completed"],
+                ],
+                "purpose": "Avoid costly print mistakes before sending to vendor.",
+            },
+            {
+                "name": "Guest Communication Timeline",
+                "headers": ["Milestone", "Message", "Delivery Channel", "Timing", "Owner", "Status"],
+                "template_rows": [
+                    ["Save the date", "Initial announcement", "Email", "8 months before", "Couple", "Planned"],
+                    ["Reminder", "RSVP reminder", "Text/Email", "2 weeks before deadline", "Couple", "Planned"],
+                ],
+                "completed_rows": [
+                    ["Save the date", "Save our date: Sept 12", "Email", "8 months before", "Couple", "Completed"],
+                    ["Reminder", "Friendly RSVP reminder", "Email", "2 weeks before deadline", "Couple", "Completed"],
+                ],
+                "purpose": "Keep guest communication clear and on schedule.",
+            },
+        ],
+    },
+    "Airbnb Host Welcome Book": {
+        "buyer_result": "Reduce repetitive guest messages and improve review quality.",
+        "assets": [
+            {
+                "name": "Guest Welcome Script Pack",
+                "headers": ["Stage", "Goal", "Message Template", "Send Timing", "Owner", "Status"],
+                "template_rows": [
+                    ["Pre-arrival", "Set clear expectations", "", "24h before check-in", "Host", "Draft"],
+                    ["Arrival", "Smooth check-in", "", "Check-in time", "Host", "Draft"],
+                ],
+                "completed_rows": [
+                    ["Pre-arrival", "Set clear expectations", "Welcome! Here are parking, code, and Wi-Fi details before you arrive.", "24h before check-in", "Host", "Completed"],
+                    ["Arrival", "Smooth check-in", "Hope check-in went smoothly. Reply here if you need anything.", "Check-in time", "Host", "Completed"],
+                ],
+                "purpose": "Standardize communication across the full guest journey.",
+            },
+            {
+                "name": "House Rules + Essentials Card",
+                "headers": ["Section", "Rule/Info", "Why It Matters", "Guest-Friendly Wording", "Status"],
+                "template_rows": [
+                    ["Quiet hours", "", "Respect neighbors", "", "Draft"],
+                    ["Checkout", "", "Faster turnover", "", "Draft"],
+                ],
+                "completed_rows": [
+                    ["Quiet hours", "10 PM to 8 AM", "Respect neighbors", "Please keep noise low after 10 PM.", "Completed"],
+                    ["Checkout", "Start dishwasher + lock door", "Faster turnover", "Before leaving, please start dishwasher and lock the door.", "Completed"],
+                ],
+                "purpose": "Publish clear rules that reduce confusion and support requests.",
+            },
+            {
+                "name": "Issue Resolution Tracker",
+                "headers": ["Issue Type", "Guest Message", "Response Script", "ETA", "Resolution", "Status"],
+                "template_rows": [
+                    ["Wi-Fi", "", "", "15 min", "", "Open"],
+                    ["Temperature", "", "", "20 min", "", "Open"],
+                ],
+                "completed_rows": [
+                    ["Wi-Fi", "Wi-Fi is down", "Thanks for flagging. I reset the router and will confirm in 10 minutes.", "10 min", "Resolved with reset", "Completed"],
+                    ["Temperature", "AC seems weak", "Thank you. I adjusted settings and arranged backup fan delivery.", "20 min", "Guest confirmed comfort", "Completed"],
+                ],
+                "purpose": "Respond quickly and consistently to common guest issues.",
+            },
+        ],
+    },
+    "Etsy Listing SEO Toolkit": {
+        "buyer_result": "Improve listing discoverability and conversion quality.",
+        "assets": [
+            {
+                "name": "Listing Optimization Builder",
+                "headers": ["Listing", "Primary Keyword", "SEO Title", "Opening Description", "Primary CTA", "Status"],
+                "template_rows": [
+                    ["Product A", "printable planner", "", "", "", "Draft"],
+                    ["Product B", "wedding invite template", "", "", "", "Draft"],
+                ],
+                "completed_rows": [
+                    ["Product A", "printable planner", "Printable Planner Bundle for Busy Professionals", "Organize your week with a printable planner that is easy to customize.", "Add to cart", "Completed"],
+                    ["Product B", "wedding invite template", "Editable Wedding Invite Template (Canva)", "Create elegant wedding invitations in minutes with an editable Canva file.", "Download now", "Completed"],
+                ],
+                "purpose": "Build search-intent titles and conversion-focused first lines.",
+            },
+            {
+                "name": "Tag Strategy Worksheet",
+                "headers": ["Listing", "Tag 1", "Tag 2", "Tag 3", "Tag 4", "Tag 5"],
+                "template_rows": [
+                    ["Product A", "", "", "", "", ""],
+                    ["Product B", "", "", "", "", ""],
+                ],
+                "completed_rows": [
+                    ["Product A", "printable planner", "daily planner pdf", "weekly planner", "digital planner", "productivity printable"],
+                    ["Product B", "wedding invite template", "editable invitation", "canva wedding invite", "printable wedding", "digital wedding invite"],
+                ],
+                "purpose": "Fill all high-intent tags with relevance and variety.",
+            },
+            {
+                "name": "Photo + Thumbnail Checklist",
+                "headers": ["Image Slot", "Image Type", "Message Goal", "Overlay Text", "Status"],
+                "template_rows": [
+                    ["1", "Cover image", "Instant clarity", "", "Draft"],
+                    ["2", "Feature callout", "What is included", "", "Draft"],
+                ],
+                "completed_rows": [
+                    ["1", "Cover image", "Instant clarity", "Editable Canva Template", "Completed"],
+                    ["2", "Feature callout", "What is included", "Includes invitation + RSVP + details card", "Completed"],
+                ],
+                "purpose": "Create thumbnails that drive clicks and reduce buyer confusion.",
+            },
+        ],
+    },
+}
+
+
 def _product_content_profile(product: dict) -> dict:
     title = product.get("title", "Digital Product")
     category = product.get("category", "General")
@@ -1603,6 +2061,7 @@ def _customer_pack_files(product: dict) -> list[tuple[str, str]]:
     safe_description = html.escape(product.get("description", ""))
     safe_snippet = html.escape(product.get("preview_snippet", ""))
     profile = _product_content_profile(product)
+    wave_pack = WAVE1_PRODUCT_ASSETS.get(title, {})
 
     style = """
 <style>
@@ -1628,8 +2087,77 @@ th{background:#f7faff;color:#1e3a5f}
         + "</tr>"
         for row in profile["plan_rows"]
     )
-    step_list_html = "".join(f"<li>{html.escape(step)}</li>" for step in profile["quickstart_steps"])
-    script_lines = [f"- {line}" for line in profile["scripts"]]
+    step_list = wave_pack.get("quickstart_steps") or profile["quickstart_steps"]
+    script_bank = wave_pack.get("scripts") or profile["scripts"]
+    step_list_html = "".join(f"<li>{html.escape(step)}</li>" for step in step_list)
+    script_lines = [f"- {line}" for line in script_bank]
+
+    def _asset_doc(item: str, idx: int) -> str:
+        safe_item = html.escape(item)
+        asset_specs = wave_pack.get("assets") or []
+        spec = asset_specs[idx] if idx < len(asset_specs) else {}
+        asset_name = spec.get("name") or item
+        purpose = spec.get("purpose")
+        table_headers = spec.get("headers") or blueprint["core_headers"][:]
+        template_rows = spec.get("template_rows") or []
+        completed_rows = spec.get("completed_rows") or []
+
+        workflow = blueprint["core_rows"][idx % len(blueprint["core_rows"])] if blueprint["core_rows"] else []
+        if not template_rows:
+            base_row = [str(c) for c in workflow] if workflow else [asset_name, "Primary use case", f"Customize {item}", "Today", "Ready outcome", "Ready"]
+            while len(base_row) < len(table_headers):
+                base_row.append("")
+            template_rows = [base_row]
+        if not completed_rows:
+            completed_rows = [list(r) for r in template_rows]
+            for row in completed_rows:
+                if row:
+                    row[-1] = "Completed"
+
+        quick_action = template_rows[0][2] if template_rows and len(template_rows[0]) > 2 else f"Customize {asset_name} for your use case"
+        expected_outcome = (
+            completed_rows[0][4]
+            if completed_rows and len(completed_rows[0]) > 4 and completed_rows[0][4]
+            else f"{asset_name} ready for immediate buyer use"
+        )
+        header_html = "".join(f"<th>{html.escape(str(h))}</th>" for h in table_headers)
+        template_html_rows = "".join(
+            "<tr>" + "".join(f"<td>{html.escape(str(v))}</td>" for v in row) + "</tr>" for row in template_rows
+        )
+        example_html_rows = "".join(
+            "<tr>" + "".join(f"<td>{html.escape(str(v))}</td>" for v in row) + "</tr>" for row in completed_rows
+        )
+
+        use_case = {
+            "Creator Growth": "Use this to plan and publish high-intent content each week.",
+            "Creator Business": "Use this to package and pitch a paid offer clearly.",
+            "Ecommerce": "Use this to improve listing quality and conversion.",
+            "Finance": "Use this to make weekly money decisions with confidence.",
+            "Career": "Use this to prepare measurable job materials and interviews.",
+            "Freelance Ops": "Use this to reduce scope creep and speed up delivery.",
+            "Wellness": "Use this to run a realistic weekly plan and track adherence.",
+            "Family": "Use this to coordinate routines with less daily friction.",
+            "Events": "Use this to deliver polished event assets on schedule.",
+            "Hospitality": "Use this to improve guest communication and consistency.",
+            "Operations": "Use this to standardize recurring workflows and handoffs.",
+            "Productivity": "Use this to execute priorities without context switching.",
+            "Branding": "Use this to keep brand voice and visuals consistent.",
+            "Real Estate": "Use this to move leads through a reliable follow-up sequence.",
+        }.get(category, "Use this to implement the product in a real workflow.")
+
+        return f"""<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">{style}</head><body>
+<div class="wrap"><section class="card">
+<div class="meta">{safe_category}</div>
+<h1>{html.escape(asset_name)}</h1>
+<p><strong>Purpose:</strong> {html.escape(purpose or use_case)}</p>
+<p><strong>15-minute setup:</strong> {html.escape(quick_action)}.</p>
+<h3>Template you can fill now</h3>
+<table><thead><tr>{header_html}</tr></thead><tbody>{template_html_rows}</tbody></table>
+<h3>Completed example</h3>
+<table><thead><tr>{header_html}</tr></thead><tbody>{example_html_rows}</tbody></table>
+<div class="cta">Expected outcome: {html.escape(expected_outcome)}</div>
+<p>Next: copy this structure into your working tool, replace sample fields, and run one real-world pass today.</p>
+</section></div></body></html>"""
 
     readme_txt = "\n".join(
         [
@@ -1637,11 +2165,12 @@ th{background:#f7faff;color:#1e3a5f}
             "",
             "START HERE",
             "1) Open 01_Start_Here.html",
-            "2) Fill 02_Quickstart_Action_Plan.csv and 03_Master_Workbook.csv",
-            "3) Open the asset_XX files and customize each one for your real use case",
-            "4) Use 04_Copy_Paste_Scripts.txt and 05_Performance_Tracker.csv weekly",
+            "2) Open 02_Quickstart_Guide.html for the guided onboarding path",
+            "3) Open each asset_XX HTML file and customize it for your real use case",
+            "4) Use CSV files as optional import/export support files",
+            "5) Use 04_Copy_Paste_Scripts.txt and 05_Performance_Tracker.csv weekly",
             "",
-            "This package is built for immediate real-world implementation.",
+            "This package is built for immediate implementation and customer-facing delivery quality.",
         ]
     )
 
@@ -1658,7 +2187,36 @@ th{background:#f7faff;color:#1e3a5f}
 <div class="cta">Quick win: {html.escape(profile["quick_win"])}</div>
 <p><strong>Buyer goal:</strong> {html.escape(profile["buyer_goal"])}</p>
 <p><strong>Price paid:</strong> {price}</p>
-<p><strong>Important:</strong> The <code>asset_XX_*.md</code> files are your actual editable product files.</p>
+<p><strong>Important:</strong> The <code>asset_XX_*.html</code> files are your primary buyer-ready product assets.</p>
+</section></div></body></html>"""
+
+    quickstart_guide_html = f"""<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">{style}</head><body>
+<div class="wrap"><section class="card">
+<h1>Quickstart Guide</h1>
+<p>Use this sequence to get from download to first real result quickly.</p>
+<ol>
+  <li>Open and customize each <strong>asset_XX HTML</strong> file in order.</li>
+  <li>Complete the first pass in one working session.</li>
+  <li>Use the script bank for communication or publishing copy.</li>
+  <li>Track outcomes weekly and improve one bottleneck at a time.</li>
+</ol>
+<h3>Fast Start Checklist</h3>
+<ul>{step_list_html}</ul>
+<p><strong>Target result:</strong> {html.escape(wave_pack.get("buyer_result", profile["buyer_goal"]))}</p>
+<div class="cta">Most buyers get first implementation done in under 90 minutes.</div>
+</section></div></body></html>"""
+
+    workbook_html_rows = "".join(
+        "<tr>" + "".join(f"<td>{html.escape(str(v))}</td>" for v in row) + "</tr>" for row in profile["workbook_rows"]
+    )
+    workbook_html = f"""<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">{style}</head><body>
+<div class="wrap"><section class="card">
+<h1>Master Workbook</h1>
+<p>This is your execution board for setup, launch, and optimization.</p>
+<table>
+<thead><tr><th>ID</th><th>Deliverable</th><th>Action</th><th>Due</th><th>Status</th><th>Definition Of Done</th><th>Notes</th></tr></thead>
+<tbody>{workbook_html_rows}</tbody></table>
+<div class="cta">Rule: do not move to optimization until your first full implementation pass is complete.</div>
 </section></div></body></html>"""
 
     playbook_html = f"""<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">{style}</head><body>
@@ -1672,7 +2230,7 @@ th{background:#f7faff;color:#1e3a5f}
 <tbody>{plan_rows_html}</tbody>
 </table>
 <h3>Pro scripts</h3>
-<ul>{"".join(f"<li>{html.escape(line)}</li>" for line in profile["scripts"])}</ul>
+<ul>{"".join(f"<li>{html.escape(line)}</li>" for line in script_bank)}</ul>
 <div class="cta">{html.escape(preview.get("result", "Outcome: implement this pack in your workflow and track performance weekly."))}</div>
 </section></div></body></html>"""
 
@@ -1730,7 +2288,7 @@ th{background:#f7faff;color:#1e3a5f}
             *script_lines,
             "",
             "Customer message template:",
-            "- Thanks for your purchase. Start with 01_Start_Here.html, then customize each asset_XX file.",
+            "- Thanks for your purchase. Start with 01_Start_Here.html, then customize each asset_XX HTML file.",
             "- Complete one finalized asset today and use it in your real workflow.",
         ]
     )
@@ -1804,11 +2362,15 @@ function exportCsv() {{
         ]
     )
     script_bank_txt = "\n".join([f"{title} - Script Bank", ""] + [f"- {line}" for line in blueprint["script_bank"]])
+    if wave_pack.get("scripts"):
+        script_bank_txt = "\n".join([f"{title} - Script Bank", ""] + [f"- {line}" for line in wave_pack["scripts"]])
 
     files = [
         ("00_READ_FIRST.txt", readme_txt),
         ("01_Start_Here.html", start_here_html),
+        ("02_Quickstart_Guide.html", quickstart_guide_html),
         ("02_Quickstart_Action_Plan.csv", quickstart_csv),
+        ("03_Master_Workbook.html", workbook_html),
         ("03_Master_Workbook.csv", workbook_csv),
         ("04_Copy_Paste_Scripts.txt", scripts_txt),
         ("05_Performance_Tracker.csv", tracker_csv),
@@ -1825,15 +2387,18 @@ function exportCsv() {{
         ("16_Guided_Interactive_Experience.html", _guided_experience_html(product)),
     ]
     for i, item in enumerate(included, start=1):
-        item_sheet = _csv_block(
+        asset_specs = wave_pack.get("assets") or []
+        asset_name = asset_specs[i - 1].get("name") if i - 1 < len(asset_specs) else item
+        item_sheet_csv = _csv_block(
             ["Section", "Buyer Action", "Filled Example"],
             [
-                [f"{item} - Setup", "Customize with your real details", f"{item} customized and ready"],
-                [f"{item} - Execution", "Use in your live workflow", f"{item} used with first customer/run"],
-                [f"{item} - Review", "Capture improvements", f"{item} optimized for next cycle"],
+                [f"{asset_name} - Setup", "Customize with your real details", f"{asset_name} customized and ready"],
+                [f"{asset_name} - Execution", "Use in your live workflow", f"{asset_name} used with first customer/run"],
+                [f"{asset_name} - Review", "Capture improvements", f"{asset_name} optimized for next cycle"],
             ],
         )
-        files.append((f"asset_{i:02d}_{slugify(item)[:42]}.csv", item_sheet))
+        files.append((f"asset_{i:02d}_{slugify(asset_name)[:42]}.html", _asset_doc(item, i - 1)))
+        files.append((f"asset_{i:02d}_{slugify(asset_name)[:42]}.csv", item_sheet_csv))
     return files
 
 
@@ -1928,7 +2493,9 @@ def run_virtual_product_test(product: dict, occupation: str) -> dict:
     required_files = {
         "00_READ_FIRST.txt",
         "01_Start_Here.html",
+        "02_Quickstart_Guide.html",
         "02_Quickstart_Action_Plan.csv",
+        "03_Master_Workbook.html",
         "03_Master_Workbook.csv",
         "07_Implementation_Playbook.html",
         "10_Interactive_Builder.html",
@@ -1938,7 +2505,14 @@ def run_virtual_product_test(product: dict, occupation: str) -> dict:
     with zipfile.ZipFile(io.BytesIO(zip_bytes), mode="r") as zf:
         names = set(zf.namelist())
         missing = sorted(required_files - names)
-        asset_files = sorted([n for n in names if n.startswith("asset_") and n.endswith(".csv")])
+        asset_stems = sorted(
+            {
+                n.rsplit(".", 1)[0]
+                for n in names
+                if n.startswith("asset_") and (n.endswith(".csv") or n.endswith(".html"))
+            }
+        )
+        asset_files = sorted([n for n in names if n.startswith("asset_")])[:20]
         sample_names = sorted(list(names))[:20]
 
         text_blob_parts = []
@@ -1968,13 +2542,13 @@ def run_virtual_product_test(product: dict, occupation: str) -> dict:
     focus_words = set(focus["keywords"])
     overlap = sorted(list(product_words & focus_words))
 
-    completeness = max(0, 100 - len(missing) * 12 - max(0, expected_assets - len(asset_files)) * 8)
+    completeness = max(0, 100 - len(missing) * 12 - max(0, expected_assets - len(asset_stems)) * 8)
     usability = 100
     if "16_Guided_Interactive_Experience.html" not in names:
         usability -= 30
     if "10_Interactive_Builder.html" not in names:
         usability -= 20
-    if len(asset_files) == 0:
+    if len(asset_stems) == 0:
         usability -= 30
     clarity = max(0, 100 - len(marker_hits) * 20)
     relevance = min(100, 35 + len(overlap) * 12)
@@ -1991,8 +2565,8 @@ def run_virtual_product_test(product: dict, occupation: str) -> dict:
     issues = []
     if missing:
         issues.append(f"Missing required files: {', '.join(missing)}")
-    if len(asset_files) < expected_assets:
-        issues.append(f"Asset file count is low ({len(asset_files)}/{expected_assets} expected from preview items).")
+    if len(asset_stems) < expected_assets:
+        issues.append(f"Asset file count is low ({len(asset_stems)}/{expected_assets} expected from preview items).")
     if marker_hits:
         issues.append(f"Placeholder markers detected: {', '.join(marker_hits)}")
     if relevance < 60:
@@ -2001,7 +2575,7 @@ def run_virtual_product_test(product: dict, occupation: str) -> dict:
     recommendations = []
     if missing:
         recommendations.append("Regenerate the pack and ensure all required retail files are included.")
-    if len(asset_files) < expected_assets:
+    if len(asset_stems) < expected_assets:
         recommendations.append("Create one concrete asset file per listed deliverable.")
     if marker_hits:
         recommendations.append("Remove placeholder language and replace with finalized, buyer-usable copy.")
@@ -2031,6 +2605,7 @@ def run_virtual_product_test(product: dict, occupation: str) -> dict:
         "download_validation": {
             "required_files_missing": missing,
             "asset_files_found": asset_files,
+            "asset_units_found": asset_stems,
             "expected_asset_count": expected_assets,
             "sample_files_checked": sample_names,
         },
@@ -2249,19 +2824,15 @@ def _autofix_content_for_product(product: dict, occupation: str) -> dict:
     base_items = product.get("preview_items", [])
     while len(base_items) < 3:
         base_items.append(f"{title} core template component {len(base_items) + 1}")
-    preview_items = [
-        f"{base_items[0]} (fully editable + buyer-ready example)",
-        f"{base_items[1]} (guided implementation version)",
-        f"{base_items[2]} (execution checklist + optimization prompts)",
-    ]
-    tagline = f"Buyer-ready system for {lang['audience']} focused on {lang['value_theme']}."
+    preview_items = [base_items[0], base_items[1], base_items[2]]
+    tagline = f"Practical toolkit for {lang['audience']} focused on {lang['value_theme']}."
     description = (
-        f"A practical digital product for {lang['audience']} that prioritizes {lang['value_theme']}. "
-        f"This package includes guided setup, editable core assets, and execution support so buyers can "
+        f"A practical digital product for {lang['audience']} focused on {lang['value_theme']}. "
+        f"Inside the package: editable core assets, completed examples, and a guided workflow to help buyers "
         f"{lang['benefit_line']} without guesswork."
     )
     preview_snippet = (
-        f"How this is used in the real world: open the guided app, customize each asset in order, "
+        f"How this is used in the real world: open the guided experience, customize each deliverable in order, "
         f"run one live implementation, then track weekly outcomes. The goal is to {lang['benefit_line']}."
     )
     return {
@@ -3985,24 +4556,20 @@ def dynamic_cover() -> Response:
     <stop offset="0%" stop-color="{html.escape(start)}"/>
     <stop offset="100%" stop-color="{html.escape(end)}"/>
   </linearGradient>
-  <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
-    <stop offset="0%" stop-color="rgba(255,255,255,0.28)"/>
-    <stop offset="100%" stop-color="rgba(255,255,255,0.08)"/>
-  </linearGradient>
 </defs>
 <rect width="1200" height="675" rx="28" fill="url(#g)"/>
 <rect x="54" y="54" width="1092" height="567" rx="24" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="2"/>
-<circle cx="1044" cy="114" r="78" fill="rgba(255,255,255,0.09)"/>
-<circle cx="1005" cy="540" r="122" fill="rgba(255,255,255,0.07)"/>
-<rect x="84" y="72" width="290" height="56" rx="28" fill="rgba(255,255,255,0.18)"/>
+<circle cx="1044" cy="114" r="78" fill="#ffffff" fill-opacity="0.10"/>
+<circle cx="1005" cy="540" r="122" fill="#ffffff" fill-opacity="0.07"/>
+<rect x="84" y="72" width="290" height="56" rx="28" fill="#ffffff" fill-opacity="0.18"/>
 <text x="116" y="109" fill="#ffffff" font-size="34" font-family="Sora, Arial, sans-serif" font-weight="700">Northstar Studio</text>
-<text x="84" y="178" fill="rgba(255,255,255,0.92)" font-size="38" font-family="Manrope, Arial, sans-serif">{safe_category}</text>
+<text x="84" y="178" fill="#ffffff" fill-opacity="0.92" font-size="38" font-family="Manrope, Arial, sans-serif">{safe_category}</text>
 {line_markup}
-<rect x="84" y="478" width="1032" height="2" fill="rgba(255,255,255,0.28)"/>
-<rect x="84" y="520" width="250" height="44" rx="22" fill="rgba(255,255,255,0.16)" stroke="rgba(255,255,255,0.28)" />
+<rect x="84" y="478" width="1032" height="2" fill="#ffffff" fill-opacity="0.28"/>
+<rect x="84" y="520" width="250" height="44" rx="22" fill="#ffffff" fill-opacity="0.16" stroke="#ffffff" stroke-opacity="0.28" />
 <text x="112" y="549" fill="#ffffff" font-size="24" font-family="Sora, Arial, sans-serif" font-weight="700">Instant Download</text>
-<rect x="348" y="520" width="220" height="44" rx="22" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.20)" />
-<text x="375" y="549" fill="rgba(255,255,255,0.95)" font-size="22" font-family="Manrope, Arial, sans-serif" font-weight="700">Editable Files</text>
+<rect x="348" y="520" width="220" height="44" rx="22" fill="#ffffff" fill-opacity="0.12" stroke="#ffffff" stroke-opacity="0.20" />
+<text x="375" y="549" fill="#ffffff" fill-opacity="0.95" font-size="22" font-family="Manrope, Arial, sans-serif" font-weight="700">Editable Files</text>
 </svg>"""
     return Response(svg, mimetype="image/svg+xml")
 
