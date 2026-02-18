@@ -2049,6 +2049,106 @@ function downloadCsv() {{
 </html>"""
 
 
+def _build_retail_pack(product: dict, profile: dict) -> dict:
+    title = product.get("title", "Digital Product")
+    category = product.get("category", "General")
+    preview = product.get("real_world_preview", {})
+    included = product.get("preview_items", [])
+    blueprint = _category_asset_blueprint(category)
+    preview_cols = [str(c) for c in (preview.get("columns") or [])]
+    preview_rows = [[str(c) for c in r] for r in (preview.get("rows") or [])]
+
+    if title in WAVE1_PRODUCT_ASSETS:
+        return WAVE1_PRODUCT_ASSETS[title]
+
+    assets: list[dict] = []
+    for idx, item in enumerate(included[:3], start=1):
+        if idx == 1 and preview_cols and preview_rows:
+            headers = preview_cols + ["Status"] if "Status" not in preview_cols else preview_cols[:]
+            template_rows = []
+            for row in preview_rows[:3]:
+                row_vals = row[: len(preview_cols)]
+                if "Status" not in preview_cols:
+                    row_vals = row_vals + ["Planned"]
+                template_rows.append(row_vals)
+            completed_rows = []
+            for row in template_rows:
+                row_vals = row[:]
+                if row_vals:
+                    row_vals[-1] = "Completed"
+                completed_rows.append(row_vals)
+            assets.append(
+                {
+                    "name": item,
+                    "headers": headers,
+                    "template_rows": template_rows,
+                    "completed_rows": completed_rows,
+                    "purpose": f"Use this as the live working version of {item.lower()} for real customer outcomes.",
+                }
+            )
+            continue
+
+        core = blueprint["core_rows"][(idx - 1) % len(blueprint["core_rows"])] if blueprint["core_rows"] else []
+        headers = blueprint["core_headers"][:]
+        base = [str(v) for v in core] if core else [item, "Primary use case", "Customize for your workflow", "Today", "Buyer-ready output", "Ready"]
+        while len(base) < len(headers):
+            base.append("")
+        template_rows = [base]
+        completed = base[:]
+        if completed:
+            completed[-1] = "Completed"
+        completed_rows = [completed]
+        assets.append(
+            {
+                "name": item,
+                "headers": headers,
+                "template_rows": template_rows,
+                "completed_rows": completed_rows,
+                "purpose": f"Turn {item.lower()} into a finished, customer-ready deliverable.",
+            }
+        )
+
+    while len(assets) < 3:
+        fallback_idx = len(assets) + 1
+        core = blueprint["core_rows"][(fallback_idx - 1) % len(blueprint["core_rows"])] if blueprint["core_rows"] else []
+        headers = blueprint["core_headers"][:]
+        base = [str(v) for v in core] if core else [f"Core Asset {fallback_idx}", "Primary use case", "Customize", "Today", "Ready output", "Ready"]
+        while len(base) < len(headers):
+            base.append("")
+        completed = base[:]
+        completed[-1] = "Completed"
+        assets.append(
+            {
+                "name": f"Core Asset {fallback_idx}",
+                "headers": headers,
+                "template_rows": [base],
+                "completed_rows": [completed],
+                "purpose": "Finalize this core asset and deploy it in your workflow this week.",
+            }
+        )
+
+    quickstart = [
+        f"Open asset_01 and customize it for your exact use case.",
+        f"Complete one live pass using {assets[0]['name']}.",
+        f"Finalize {assets[1]['name']} and {assets[2]['name']} with your business details.",
+        "Run weekly review and improve one bottleneck each cycle.",
+    ]
+
+    scripts = [
+        f"Implementation line: this {category.lower()} toolkit is built for immediate practical use.",
+        "Clarity line: keep instructions simple, outcome-first, and buyer-facing.",
+        "Execution line: complete one full implementation pass before optimizing details.",
+        "Result line: document measured outcomes and use them in your next iteration.",
+    ]
+
+    return {
+        "buyer_result": preview.get("result") or profile.get("buyer_goal", "Practical implementation in real workflow."),
+        "quickstart_steps": quickstart,
+        "scripts": scripts,
+        "assets": assets,
+    }
+
+
 def _customer_pack_files(product: dict) -> list[tuple[str, str]]:
     preview = product.get("real_world_preview", {})
     title = product.get("title", "Digital Product")
@@ -2061,7 +2161,7 @@ def _customer_pack_files(product: dict) -> list[tuple[str, str]]:
     safe_description = html.escape(product.get("description", ""))
     safe_snippet = html.escape(product.get("preview_snippet", ""))
     profile = _product_content_profile(product)
-    wave_pack = WAVE1_PRODUCT_ASSETS.get(title, {})
+    wave_pack = _build_retail_pack(product, profile)
 
     style = """
 <style>
